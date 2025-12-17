@@ -390,7 +390,7 @@ docker run -d -p 3000:3000 \
 适合零成本快速上线。
 *注意：部署完成后，请务必在 Vercel 控制台的 **Settings -> Environment Variables** 中添加 `TMDB_API_KEY`。*
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fednovas%2FdongguaTV)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fednovas%2FdongguaTV&env=TMDB_API_KEY,ACCESS_PASSWORD,TMDB_PROXY_URL,REMOTE_DB_URL)
 
 *(请确保先将本项目fork到您自己的 GitHub 仓库，点击上方按钮即可一键导入部署)*
 

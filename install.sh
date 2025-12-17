@@ -159,6 +159,10 @@ get_user_input() {
         4) CACHE_TYPE="none";;
         *) CACHE_TYPE="json";;
     esac
+
+    # 访问密码
+    echo ""
+    read -p "请输入访问密码 (默认为空/不设置): " ACCESS_PASSWORD
     
     # 安装目录
     echo ""
@@ -173,6 +177,7 @@ get_user_input() {
     echo "TMDB 反代地址: ${TMDB_PROXY_URL:-未配置}"
     echo "运行端口: $PORT"
     echo "缓存模式: $CACHE_TYPE"
+    echo "访问密码: ${ACCESS_PASSWORD:-未设置}"
     echo "安装目录: $INSTALL_DIR"
     echo "=========================================="
     echo ""
@@ -235,6 +240,9 @@ TMDB_PROXY_URL=$TMDB_PROXY_URL
 
 # 缓存类型
 CACHE_TYPE=$CACHE_TYPE
+
+# 访问密码 (可选)
+ACCESS_PASSWORD=$ACCESS_PASSWORD
 EOF
 
     print_success "环境变量配置完成"
