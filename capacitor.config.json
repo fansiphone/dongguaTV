@@ -1,6 +1,6 @@
 ﻿{
     "appId": "com.ednovas.donguatv",
-    "appName": "E视界",
+    "appName": "TOM影院",
     "webDir": "public",
     "server": {
         "url": "http://nas.848588.xyz:3600",
@@ -15,3 +15,4 @@
     }
 
 }
+
