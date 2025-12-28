@@ -679,12 +679,12 @@ docker run -d -p 3000:3000 \
 4.  点击 **映射/绑定域名**，输入您的域名 (如 `movie.example.com`)。
 5.  访问域名即可使用。
 
-### 🤖 Android APP 构建 (GitHub Actions)
+#### 🤖 Android APP 构建 (GitHub Actions)
 
-本项目配置了自动化构建流程，您可以轻松编译自己的 Android 客户端。
+本项目配置了自动化构建流程。由于构建 APK 耗时较长，**默认仅在推送 Tag 时触发构建**，普通代码提交不会触发。
 
 1.  **Fork 本仓库** 到您的 GitHub 账号。
-2.  **提交 Tag**：
+2.  **提交 Tag (触发构建)**：
     每当您推送一个以 `v` 开头的 Tag (例如 `v1.0.0`) 到仓库时，GitHub Actions 会自动触发构建。
     ```bash
     git tag v1.0.0
@@ -753,7 +753,54 @@ docker run -d -p 3000:3000 \
     ```
     APK 位于 `android/app/build/outputs/apk/release/`
 
+#### 🏠 内网 HTTP 使用说明
+
+> **⚠️ 重要**：从 Android 9 (API 28) 开始，Android 默认禁止明文 HTTP 流量 (Cleartext Traffic)。如果您的 APK 无法连接 HTTP 服务器，请确认以下配置。
+
+**问题现象**：
+- APK 在 Android TV / 手机上一直显示 loading
+- 浏览器可以正常访问 `http://192.168.x.x:3000`，但 APP 不行
+- 控制台报错 `net::ERR_CLEARTEXT_NOT_PERMITTED`
+
+**解决方案**：
+
+本项目已内置 HTTP 支持配置。如果您使用 GitHub Actions 自动构建或本地构建，APK 会自动支持 HTTP 访问。
+
+**技术细节** (已在项目中配置，无需手动操作)：
+
+1. `android/app/src/main/AndroidManifest.xml` 已添加：
+   ```xml
+   <application
+       android:usesCleartextTraffic="true"
+       android:networkSecurityConfig="@xml/network_security_config"
+       ...>
+   ```
+
+2. `android/app/src/main/res/xml/network_security_config.xml` 已配置：
+   ```xml
+   <network-security-config>
+       <base-config cleartextTrafficPermitted="true">
+           <trust-anchors>
+               <certificates src="system" />
+           </trust-anchors>
+       </base-config>
+   </network-security-config>
+   ```
+
+**使用 GitHub Actions 构建内网 APK**：
+
+1. 进入 **Actions** → **Android Build & Release** → **Run workflow**
+2. 填写您的内网服务器地址：`http://192.168.1.100:3000`
+3. 构建完成后下载 APK，即可正常访问 HTTP 服务
+
+**📝 注意事项**：
+- `capacitor.config.json` 中的 `"cleartext": true` 是 Capacitor 配置，但 Android 9+ 还需要上述 Android 原生配置
+- 如果您手动构建 APK，请确保项目代码是最新版本（包含上述配置）
+- 建议使用固定 IP 地址而非主机名，避免 DNS 解析问题
+
 ---
+
+
 
 ## 💾 数据维护与备份
 
