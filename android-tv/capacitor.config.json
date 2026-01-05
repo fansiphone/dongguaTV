@@ -1,0 +1,22 @@
+{
+    "appId": "com.ednovas.donguatv.tv",
+    "appName": "E视界TV",
+    "webDir": "../public",
+    "bundledWebRuntime": false,
+    "server": {
+        "url": "https://ednovas.video",
+        "cleartext": true
+    },
+    "plugins": {
+        "StatusBar": {
+            "overlaysWebView": false,
+            "style": "DARK",
+            "backgroundColor": "#000000"
+        }
+    },
+    "android": {
+        "allowMixedContent": true,
+        "captureInput": true,
+        "webContentsDebuggingEnabled": true
+    }
+}

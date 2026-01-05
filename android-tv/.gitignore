@@ -1,0 +1,19 @@
+# Node
+node_modules/
+
+# Android build
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+*.apk
+
+# Logs
+*.log
+build_error*.txt
+build_log*.txt
+
+# IDE
+.idea/
+*.iml
+.vscode/

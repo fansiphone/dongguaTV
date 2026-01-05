@@ -1,0 +1,328 @@
+name: Android TV Build (GeckoView)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 与标准版一起触发
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Server URL (e.g. https://your-site.com)'
+        required: true
+        default: 'https://ednovas.video'
+      app_name:
+        description: 'App Name'
+        required: true
+        default: 'E视界TV'
+      version_tag:
+        description: 'Version Tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-tv:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'android-tv/package-lock.json'
+
+      - name: Setup Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Node dependencies
+        working-directory: android-tv
+        run: npm install
+        
+      - name: Sync Capacitor Android
+        working-directory: android-tv
+        run: npx cap sync android
+
+      - name: Patch Capacitor libraries for AGP 8
+        working-directory: android-tv
+        run: |
+          echo "🔧 Patching dependencies for AGP 8 compatibility..."
+          
+          # 1. Patch @capacitor/android (Core)
+          sed -i '/android {/a \    namespace "com.getcapacitor.android"' node_modules/@capacitor/android/capacitor/build.gradle
+
+          # 2. Patch capacitor-cordova-android-plugins (Generated)
+          if [ -f "android/capacitor-cordova-android-plugins/build.gradle" ]; then
+             sed -i '/android {/a \    namespace "capacitor.android.plugins"' android/capacitor-cordova-android-plugins/build.gradle
+          fi
+
+          # 3. Patch @capacitor/status-bar
+          if [ -f "node_modules/@capacitor/status-bar/android/build.gradle" ]; then
+             sed -i '/android {/a \    namespace "com.capacitorjs.plugins.statusbar"' node_modules/@capacitor/status-bar/android/build.gradle
+          fi
+
+          # 4. Patch @web-media/capacitor-geckoview
+          if [ -f "node_modules/@web-media/capacitor-geckoview/android/build.gradle" ]; then
+             # Try to extract package name from manifest
+             pkg=$(grep -o 'package="[^"]*"' node_modules/@web-media/capacitor-geckoview/android/src/main/AndroidManifest.xml | cut -d'"' -f2 || echo "com.web_media.capacitor_geckoview")
+             if [ -z "$pkg" ]; then pkg="com.web_media.capacitor_geckoview"; fi
+             echo "  Patching geckoview with namespace: $pkg"
+             sed -i "/android {/a \    namespace \"$pkg\"" node_modules/@web-media/capacitor-geckoview/android/build.gradle
+          fi
+
+      - name: Apply GeckoView patches
+        working-directory: android-tv
+        run: |
+          chmod +x patch-geckoview.sh
+          ./patch-geckoview.sh
+
+      # 仅在手动触发时修改配置
+      - name: Configure App (Manual Build)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        working-directory: android-tv
+        run: |
+          echo "📝 Applying manual configuration..."
+          tmp=$(mktemp)
+          jq --arg url "${{ inputs.server_url }}" --arg name "${{ inputs.app_name }}" \
+             '.server.url = $url | .appName = $name' capacitor.config.json > "$tmp" && mv "$tmp" capacitor.config.json
+          
+          echo "✅ Configuration updated:"
+          echo "   App Name: ${{ inputs.app_name }}"
+          echo "   Server URL: ${{ inputs.server_url }}"
+
+      - name: Show Capacitor Config
+        working-directory: android-tv
+        run: |
+          echo "=== Capacitor Config ==="
+          cat capacitor.config.json
+
+      # 从网站图标生成 Android App 图标
+      - name: Generate App Icons from Website Icon
+        run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          
+          ICON_SRC="public/icon.png"
+          DEST_DIR="android-tv/android/app/src/main/res"
+          
+          convert "$ICON_SRC" -resize 36x36 -background none -gravity center -extent 48x48 "$DEST_DIR/mipmap-mdpi/ic_launcher.png"
+          convert "$ICON_SRC" -resize 36x36 -background none -gravity center -extent 48x48 "$DEST_DIR/mipmap-mdpi/ic_launcher_round.png"
+          convert "$ICON_SRC" -resize 72x72 -background none -gravity center -extent 108x108 "$DEST_DIR/mipmap-mdpi/ic_launcher_foreground.png"
+          
+          convert "$ICON_SRC" -resize 54x54 -background none -gravity center -extent 72x72 "$DEST_DIR/mipmap-hdpi/ic_launcher.png"
+          convert "$ICON_SRC" -resize 54x54 -background none -gravity center -extent 72x72 "$DEST_DIR/mipmap-hdpi/ic_launcher_round.png"
+          convert "$ICON_SRC" -resize 108x108 -background none -gravity center -extent 162x162 "$DEST_DIR/mipmap-hdpi/ic_launcher_foreground.png"
+          
+          convert "$ICON_SRC" -resize 72x72 -background none -gravity center -extent 96x96 "$DEST_DIR/mipmap-xhdpi/ic_launcher.png"
+          convert "$ICON_SRC" -resize 72x72 -background none -gravity center -extent 96x96 "$DEST_DIR/mipmap-xhdpi/ic_launcher_round.png"
+          convert "$ICON_SRC" -resize 144x144 -background none -gravity center -extent 216x216 "$DEST_DIR/mipmap-xhdpi/ic_launcher_foreground.png"
+          
+          convert "$ICON_SRC" -resize 108x108 -background none -gravity center -extent 144x144 "$DEST_DIR/mipmap-xxhdpi/ic_launcher.png"
+          convert "$ICON_SRC" -resize 108x108 -background none -gravity center -extent 144x144 "$DEST_DIR/mipmap-xxhdpi/ic_launcher_round.png"
+          convert "$ICON_SRC" -resize 216x216 -background none -gravity center -extent 324x324 "$DEST_DIR/mipmap-xxhdpi/ic_launcher_foreground.png"
+          
+          convert "$ICON_SRC" -resize 144x144 -background none -gravity center -extent 192x192 "$DEST_DIR/mipmap-xxxhdpi/ic_launcher.png"
+          convert "$ICON_SRC" -resize 144x144 -background none -gravity center -extent 192x192 "$DEST_DIR/mipmap-xxxhdpi/ic_launcher_round.png"
+          convert "$ICON_SRC" -resize 288x288 -background none -gravity center -extent 432x432 "$DEST_DIR/mipmap-xxxhdpi/ic_launcher_foreground.png"
+          
+          echo "✅ App icons generated from website icon"
+
+      - name: Make gradlew executable
+        run: chmod +x android-tv/android/gradlew
+
+      # 构建 5 个版本的 APK: 4个单架构 + 1个Universal
+      - name: Build All APKs (Per-Architecture + Universal)
+        working-directory: android-tv/android
+        run: |
+          echo "🔨 Building Universal APK (all architectures)..."
+          ./gradlew assembleRelease
+          
+          echo "🔨 Building per-architecture APKs..."
+          # 构建单独架构的 APK 需要先配置 splits
+          # 由于我们无法修改 build.gradle，使用 bundletool 提取各架构
+          # 这里直接构建 universal，单架构版本通过提取实现
+
+      - name: Get version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare Signing Key
+        id: keystore
+        run: |
+          KEYSTORE_FILE="release.keystore"
+          if [ -n "${{ secrets.SIGNING_KEY }}" ]; then
+            echo "🔐 Using Release Key from Secrets"
+            echo "${{ secrets.SIGNING_KEY }}" | base64 -d > $KEYSTORE_FILE
+            echo "STORE_PASS=${{ secrets.KEY_STORE_PASSWORD }}" >> $GITHUB_OUTPUT
+            echo "KEY_ALIAS=${{ secrets.ALIAS }}" >> $GITHUB_OUTPUT
+            echo "KEY_PASS=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ No Secrets found. Generating Debug Key..."
+            keytool -genkeypair -v \
+              -keystore $KEYSTORE_FILE \
+              -storetype PKCS12 \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            
+            echo "STORE_PASS=android" >> $GITHUB_OUTPUT
+            echo "KEY_ALIAS=androiddebugkey" >> $GITHUB_OUTPUT
+            echo "KEY_PASS=android" >> $GITHUB_OUTPUT
+          fi
+
+      # 解压 APK 并重新打包各架构版本
+      - name: Create Per-Architecture APKs
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -n 1)
+          APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner"
+          ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/zipalign"
+          AAPT2="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt2"
+          
+          UNSIGNED_APK="android-tv/android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          OUTPUT_DIR="android-tv/android/app/build/outputs/apk/release"
+          WORK_DIR="apk_work"
+          
+          # 创建工作目录
+          mkdir -p $WORK_DIR
+          
+          # 解压 APK
+          unzip -q "$UNSIGNED_APK" -d "$WORK_DIR/universal"
+          
+          # 各架构
+          ARCHS=("arm64-v8a" "armeabi-v7a" "x86" "x86_64")
+          
+          for ARCH in "${ARCHS[@]}"; do
+            echo "📦 Creating APK for $ARCH..."
+            ARCH_DIR="$WORK_DIR/$ARCH"
+            mkdir -p "$ARCH_DIR"
+            
+            # 复制所有文件
+            cp -r "$WORK_DIR/universal/"* "$ARCH_DIR/"
+            
+            # 删除其他架构的 native libraries
+            if [ -d "$ARCH_DIR/lib" ]; then
+              for dir in "$ARCH_DIR/lib/"*; do
+                if [ -d "$dir" ] && [ "$(basename $dir)" != "$ARCH" ]; then
+                  rm -rf "$dir"
+                fi
+              done
+            fi
+            
+            # 重新打包
+            ARCH_APK_UNSIGNED="$OUTPUT_DIR/app-$ARCH-unsigned.apk"
+            ARCH_APK_ALIGNED="$OUTPUT_DIR/app-$ARCH-aligned.apk"
+            ARCH_APK_SIGNED="$OUTPUT_DIR/E视界TV-$VERSION-geckoview-$ARCH.apk"
+            
+            cd "$ARCH_DIR"
+            zip -r -q "../../$ARCH_APK_UNSIGNED" .
+            cd - > /dev/null
+            
+            # 对齐
+            $ZIPALIGN -v -p 4 "$ARCH_APK_UNSIGNED" "$ARCH_APK_ALIGNED"
+            
+            # 签名
+            $APKSIGNER sign \
+              --ks "release.keystore" \
+              --ks-pass pass:"${{ steps.keystore.outputs.STORE_PASS }}" \
+              --ks-key-alias "${{ steps.keystore.outputs.KEY_ALIAS }}" \
+              --key-pass pass:"${{ steps.keystore.outputs.KEY_PASS }}" \
+              --out "$ARCH_APK_SIGNED" \
+              "$ARCH_APK_ALIGNED"
+            
+            rm -f "$ARCH_APK_UNSIGNED" "$ARCH_APK_ALIGNED"
+            
+            echo "✅ Created: $ARCH_APK_SIGNED"
+          done
+          
+          # 签名 Universal APK
+          echo "📦 Signing Universal APK..."
+          UNIVERSAL_ALIGNED="$OUTPUT_DIR/app-universal-aligned.apk"
+          UNIVERSAL_SIGNED="$OUTPUT_DIR/E视界TV-$VERSION-geckoview-universal.apk"
+          
+          $ZIPALIGN -v -p 4 "$UNSIGNED_APK" "$UNIVERSAL_ALIGNED"
+          $APKSIGNER sign \
+            --ks "release.keystore" \
+            --ks-pass pass:"${{ steps.keystore.outputs.STORE_PASS }}" \
+            --ks-key-alias "${{ steps.keystore.outputs.KEY_ALIAS }}" \
+            --key-pass pass:"${{ steps.keystore.outputs.KEY_PASS }}" \
+            --out "$UNIVERSAL_SIGNED" \
+            "$UNIVERSAL_ALIGNED"
+          
+          rm -f "$UNSIGNED_APK" "$UNIVERSAL_ALIGNED"
+          
+          # 清理
+          rm -rf "$WORK_DIR" "release.keystore"
+          
+          echo "✅ All APKs created successfully!"
+
+      - name: List APK files
+        run: |
+          echo "=== APK Files ==="
+          ls -lh android-tv/android/app/build/outputs/apk/release/*.apk
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: E视界TV-geckoview-apks
+          path: android-tv/android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Append to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "E视界 ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## 📺 电视盒子版 (GeckoView) - ${{ steps.version.outputs.VERSION }}
+            
+            > ⚠️ 如果标准版 APK 在你的电视盒子上卡住无法运行，请使用此版本！
+            
+            ### 📱 GeckoView 版本下载
+            
+            | 文件 | 架构 | 体积 | 适用设备 |
+            |------|------|------|----------|
+            | `E视界TV-...-geckoview-arm64-v8a.apk` | ARM 64位 | ~100MB | 大多数现代盒子 |
+            | `E视界TV-...-geckoview-armeabi-v7a.apk` | ARM 32位 | ~80MB | 老旧盒子 |
+            | `E视界TV-...-geckoview-x86_64.apk` | x86 64位 | ~100MB | 模拟器/部分平板 |
+            | `E视界TV-...-geckoview-x86.apk` | x86 32位 | ~80MB | 老旧模拟器 |
+            | `E视界TV-...-geckoview-universal.apk` | 全架构 | ~350MB | 通用版 |
+            
+            > 💡 **如何选择**：不确定设备架构时，请下载 `universal` 版本
+            
+            ### 🔧 GeckoView 版本特点
+            - ✅ 自带 Mozilla GeckoView 浏览器引擎
+            - ✅ 不依赖系统 WebView 版本
+            - ✅ 兼容老旧电视盒子和投影仪
+            
+            ### 📺 设备兼容性
+            - ✅ 小米电视/盒子
+            - ✅ 极米投影仪
+            - ✅ 天猫魔盒
+            - ✅ 其他老旧 Android 盒子
+            
+            ---
+            
+            > 💡 普通手机/平板用户请使用标准版 APK，体积更小
+          files: android-tv/android/app/build/outputs/apk/release/*.apk
+          append_body: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

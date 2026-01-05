@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">E视界TV</string>
+    <string name="title_activity_main">E视界TV</string>
+    <string name="package_name">com.ednovas.donguatv.tv</string>
+    <string name="custom_url_scheme">com.ednovas.donguatv.tv</string>
+</resources>

@@ -6,7 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- 核心：不发送 Referrer -->
     <meta name="referrer" content="no-referrer">
-    <title>E视界</title>
+    <title>E视界 - 免费在线观看电影电视剧 | 高清影视聚合播放器</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="E视界是一个现代化的流媒体聚合播放器，免费在线观看最新电影、电视剧、综艺、动漫。支持多线路切换、智能测速、4K高清播放。">
+    <meta name="keywords" content="在线观看,免费电影,电视剧,综艺,动漫,高清视频,流媒体,影视聚合,E视界">
+    <meta name="author" content="E视界">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://ednovas.video/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ednovas.video/">
+    <meta property="og:title" content="E视界 - 免费在线观看电影电视剧">
+    <meta property="og:description" content="现代化流媒体聚合播放器，免费观看最新电影、电视剧、综艺、动漫。">
+    <meta property="og:image" content="https://ednovas.video/icons/icon-512.png">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="E视界 - 免费在线观看电影电视剧">
+    <meta name="twitter:description" content="现代化流媒体聚合播放器，免费观看最新电影、电视剧、综艺、动漫。">
+    <meta name="twitter:image" content="https://ednovas.video/icons/icon-512.png">
 
     <!-- 兼容性检测 (必须在所有脚本之前) -->
     <script>
@@ -278,6 +299,11 @@
 
         .dplayer-menu-item:hover {
             background: rgba(229, 9, 20, 0.4) !important;
+        }
+
+        /* 隐藏关于作者及版本号 (通常是最后两项) */
+        .dplayer-menu .dplayer-menu-item:nth-last-child(-n+2) {
+            display: none !important;
         }
 
         /* 11. 时间显示美化 */
@@ -717,6 +743,7 @@
             background: linear-gradient(90deg, rgba(229, 9, 20, 0.6), transparent) !important;
             color: #ff6b81 !important;
             font-weight: bold !important;
+            border-left: 3px solid #e50914 !important;
         }
 
         /* 24. 加载动画自定义 */
@@ -2441,6 +2468,12 @@
                 transform: none !important;
             }
         }
+
+        /* 📱 Android/Capacitor Fullscreen: 只处理状态栏，不干扰 DPlayer 原生全屏 */
+        /* 这个 class 只在需要时由 JS 添加 */
+        body.dplayer-fullscreen-active .navbar-custom {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -2520,7 +2553,8 @@
                             <h1 class="hero-title">{{ item.title }}</h1>
                             <p class="hero-desc">{{ item.overview }}</p>
                             <div class="hero-btns" style="display: flex; gap: 15px; flex-wrap: wrap;">
-                                <button class="btn-play" @click="autoSearch(item.title)"><i class="fas fa-play"></i>
+                                <button class="btn-play" @click="autoSearch(item.title, item.originalTitle)"><i
+                                        class="fas fa-play"></i>
                                     播放</button>
                                 <button class="btn-info" @click="showMovieInfo(item.rawData)"><i
                                         class="fas fa-info-circle"></i> 更多信息</button>
@@ -2651,7 +2685,7 @@
                                 class="fas fa-chevron-left"></i></button>
                         <div class="hot-row" :ref="key" @scroll="onRowScroll(key)">
                             <div class="hot-card" v-for="item in rowLists[key]" :key="item.id"
-                                @click="autoSearch(item.title || item.name)">
+                                @click="autoSearch(item.title || item.name, item.original_title || item.original_name)">
                                 <div class="poster-wrap">
                                     <img :src="getPosterUrl(item.poster_path)" loading="lazy"
                                         @load="$event.target.classList.add('loaded'); $event.target.parentElement.classList.add('img-loaded')">
@@ -2671,7 +2705,7 @@
                     <!-- 展开状态：分页网格布局 -->
                     <div class="grid-expanded" v-show="expandedRows[key]">
                         <div class="hot-card" v-for="item in getPagedItems(key)" :key="'grid-' + item.id"
-                            @click="autoSearch(item.title || item.name)">
+                            @click="autoSearch(item.title || item.name, item.original_title || item.original_name)">
                             <div class="poster-wrap">
                                 <img :src="getPosterUrl(item.poster_path)"
                                     @load="$event.target.classList.add('loaded'); $event.target.parentElement.classList.add('img-loaded')">
@@ -2791,7 +2825,7 @@
                         <p class="info-overview">{{ infoModalData?.overview || '暂无简介' }}</p>
                         <div class="info-modal-btns">
                             <button class="btn-play"
-                                @click="showInfoModal = false; autoSearch(infoModalData?.title || infoModalData?.name)">
+                                @click="showInfoModal = false; autoSearch(infoModalData?.title || infoModalData?.name, infoModalData?.original_title || infoModalData?.original_name)">
                                 <i class="fas fa-play"></i> 立即播放
                             </button>
                         </div>
@@ -3271,6 +3305,17 @@
                         this.updateHistoryScrollNeeded();
                     }, 150);
                 }, { passive: true });
+
+                // 修复：点击任意地方关闭 DPlayer 右键菜单
+                document.addEventListener('click', (e) => {
+                    const menu = document.querySelector('.dplayer-menu');
+                    if (menu && menu.classList.contains('dplayer-menu-show')) {
+                        // 如果点击的不是菜单内部，则关闭菜单
+                        if (!menu.contains(e.target)) {
+                            menu.classList.remove('dplayer-menu-show');
+                        }
+                    }
+                });
 
                 // Store reference to app instance for external access
                 window.vueApp = this;
@@ -4193,29 +4238,57 @@
                     };
 
                     try {
-                        // 1. 优先使用 Cloudflare Trace (稳定、无速率限制)
-                        const res = await fetchWithTimeout('https://www.cloudflare.com/cdn-cgi/trace', 3000);
+                        // 1. 优先使用 ip.sb (国内访问稳定，无速率限制，返回标准 JSON)
+                        const res = await fetchWithTimeout('https://api.ip.sb/geoip', 3000);
                         if (res.ok) {
-                            const text = await res.text();
-                            const matches = text.match(/loc=([A-Z]+)/);
-                            if (matches && matches[1] === 'CN') isCN = true;
+                            const data = await res.json();
+                            // 检查是否是中国大陆 (country_code = CN)
+                            // ip.sb 返回: { "country_code": "CN", "country": "China", ... }
+                            if (data.country_code === 'CN') {
+                                // 排除港澳台 (根据 region 或 city 判断)
+                                const excludeRegions = ['Hong Kong', 'Macau', 'Taiwan', '香港', '澳门', '台湾'];
+                                const region = data.region || data.city || '';
+                                if (!excludeRegions.some(r => region.includes(r))) {
+                                    isCN = true;
+                                }
+                            }
                         } else {
-                            throw new Error('CF Trace Status: ' + res.status);
+                            throw new Error('ip.sb Status: ' + res.status);
                         }
                     } catch (e) {
-                        // 2. 降级到 ipapi.co (有速率限制，仅作为备选)
-                        console.log('[IP检测] CF Trace 失败，尝试 ipapi.co...', e.message || e);
+                        // 2. 备选：pv.sohu.com（搜狐，国内速度快）
+                        console.log('[IP检测] ip.sb 失败，尝试搜狐接口...', e.message || e);
                         try {
-                            const res = await fetchWithTimeout('https://ipapi.co/json/', 3000);
+                            const res = await fetchWithTimeout('https://pv.sohu.com/cityjson?ie=utf-8', 3000);
                             if (res.ok) {
-                                const data = await res.json();
-                                if (data.country_code === 'CN') isCN = true;
+                                const text = await res.text();
+                                // 响应格式: var returnCitySN = {"cip": "x.x.x.x", "cid": "...", "cname": "北京市"};
+                                const match = text.match(/cname\s*:\s*["']([^"']+)["']/);
+                                if (match) {
+                                    // 只要 cname 有值就认为是国内（搜狐接口只返回国内城市）
+                                    // 排除港澳台
+                                    const city = match[1];
+                                    const excludeRegions = ['香港', '澳门', '台湾'];
+                                    if (!excludeRegions.some(r => city.includes(r))) {
+                                        isCN = true;
+                                    }
+                                }
                             } else {
-                                console.warn('[IP检测] ipapi.co 响应异常:', res.status);
+                                console.warn('[IP检测] 搜狐接口响应异常:', res.status);
                             }
                         } catch (e2) {
-                            // 即使检测失败也不阻塞，继续执行
-                            console.warn('[IP检测] 所有接口均失败，跳过自动切换');
+                            // 3. 最终备选：Cloudflare Trace（国外用户）
+                            console.log('[IP检测] 搜狐接口失败，尝试 Cloudflare...', e2.message || e2);
+                            try {
+                                const res = await fetchWithTimeout('https://www.cloudflare.com/cdn-cgi/trace', 3000);
+                                if (res.ok) {
+                                    const text = await res.text();
+                                    const matches = text.match(/loc=([A-Z]+)/);
+                                    if (matches && matches[1] === 'CN') isCN = true;
+                                }
+                            } catch (e3) {
+                                console.warn('[IP检测] 所有接口均失败，跳过自动切换');
+                            }
                         }
                     }
 
@@ -4465,6 +4538,7 @@
                             if (data.results) {
                                 this.heroList = data.results.filter(i => i.backdrop_path).slice(0, 5).map(item => ({
                                     title: item.title || item.name,
+                                    originalTitle: item.original_title || item.original_name || '',  // 原始标题（通常是英文）
                                     overview: item.overview || '精彩内容不容错过',
                                     backdrop: `${TMDB_BACKDROP_URL}${item.backdrop_path}`,
                                     rawData: item
@@ -4499,11 +4573,12 @@
                         }).catch(() => { });
                 },
 
-                autoSearch(name) {
+                autoSearch(name, originalTitle = '') {
                     this.keyword = name;
+                    this._originalTitle = originalTitle;  // 保存原始标题用于搜索
                     this.doSearch();
                 },
-                clearSearch() { this.searched = false; this.keyword = ''; this.rawList = []; },
+                clearSearch() { this.searched = false; this.keyword = ''; this.rawList = []; this._originalTitle = ''; },
                 doSearch() {
                     if (!this.keyword) return;
 
@@ -4517,7 +4592,11 @@
                     this.rawList = [];
                     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                    const url = `/api/search?wd=${encodeURIComponent(this.keyword)}&stream=true`;
+                    // 构建搜索 URL，包含原始标题用于智能搜索
+                    let url = `/api/search?wd=${encodeURIComponent(this.keyword)}&stream=true`;
+                    if (this._originalTitle && this._originalTitle !== this.keyword) {
+                        url += `&original=${encodeURIComponent(this._originalTitle)}`;
+                    }
                     this._evtSource = new EventSource(url);
 
                     this._evtSource.onmessage = (e) => {
@@ -4944,6 +5023,63 @@
                             ]
                         });
 
+                        // 监听倍速变化，更新 UI
+                        if (dp.video) {
+                            dp.video.addEventListener('ratechange', () => {
+                                const speed = dp.video.playbackRate;
+                                // 💾 记住用户选择的倍速
+                                try { localStorage.setItem('dplayer_speed', speed); } catch (e) { }
+
+                                const dplayerContainer = document.getElementById('dplayer');
+
+                                // 1. 更新右键菜单文本
+                                const menuItems = dplayerContainer.querySelectorAll('.dplayer-menu-item a');
+                                menuItems.forEach(item => {
+                                    if (item.textContent.includes('当前速度')) {
+                                        item.textContent = `⚡ 当前速度: ${speed}x`;
+                                    }
+                                });
+
+                                // 2. 显示倍速浮层提示
+                                const indicator = dplayerContainer.querySelector('.dplayer-speed-indicator');
+                                if (indicator) {
+                                    indicator.innerText = `倍速: ${speed}x`;
+                                    indicator.classList.add('show');
+                                    clearTimeout(indicator.hideTimer);
+                                    indicator.hideTimer = setTimeout(() => {
+                                        indicator.classList.remove('show');
+                                    }, 1500);
+                                }
+
+                                // 3. 强制更新设置面板中的高亮状态
+                                const speedItems = dplayerContainer.querySelectorAll('.dplayer-setting-speed-item');
+                                speedItems.forEach(item => {
+                                    // DPlayer 的 item 包含 data-speed 属性
+                                    const itemSpeed = parseFloat(item.dataset.speed);
+                                    if (itemSpeed && Math.abs(itemSpeed - speed) < 0.01) {
+                                        item.classList.add('dplayer-setting-speed-current');
+                                    } else {
+                                        item.classList.remove('dplayer-setting-speed-current');
+                                    }
+                                });
+                            });
+                        }
+
+                        // 📱 全屏事件监听（只做最小化处理，不干扰 DPlayer 原生行为）
+                        dp.on('fullscreen', () => {
+                            console.log('[DPlayer] 进入全屏');
+                            // 只隐藏导航栏
+                            const navbar = document.querySelector('.navbar-custom');
+                            if (navbar) navbar.style.display = 'none';
+                        });
+
+                        dp.on('fullscreen_cancel', () => {
+                            console.log('[DPlayer] 退出全屏');
+                            // 恢复导航栏
+                            const navbar = document.querySelector('.navbar-custom');
+                            if (navbar) navbar.style.display = '';
+                        });
+
                         // ========== 🔧 设置菜单修复 ==========
                         setTimeout(() => {
                             const dplayerContainer = document.getElementById('dplayer');
@@ -4959,11 +5095,206 @@
                                             // 当设置菜单打开时，禁用遮罩层的点击事件
                                             mask.style.pointerEvents = isOpen ? 'none' : 'auto';
                                             console.log('[Settings] Menu ' + (isOpen ? 'OPENED - mask disabled' : 'CLOSED - mask enabled'));
+
+                                            // 打开菜单时，强制刷新一次倍速高亮
+                                            try {
+                                                if (isOpen && typeof dp !== 'undefined' && dp && dp.video) {
+                                                    const speed = dp.video.playbackRate;
+                                                    const dplayerContainer = document.getElementById('dplayer');
+                                                    if (dplayerContainer) {
+                                                        const speedItems = dplayerContainer.querySelectorAll('.dplayer-setting-speed-item');
+                                                        speedItems.forEach(item => {
+                                                            const itemSpeed = parseFloat(item.dataset.speed);
+                                                            if (itemSpeed && Math.abs(itemSpeed - speed) < 0.01) {
+                                                                item.classList.add('dplayer-setting-speed-current');
+                                                            } else {
+                                                                item.classList.remove('dplayer-setting-speed-current');
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            } catch (e) { console.warn('Highlight update failed:', e); }
+
+                                            // 初始化/显示跳过片头片尾 UI
+                                            if (isOpen && window.skipManager) {
+                                                window.skipManager.initUI();
+                                            }
                                         }
                                     });
                                 });
 
                                 observer.observe(settingBox, { attributes: true });
+
+                                // ========== ✨ 跳过片头片尾管理器 ==========
+                                window.skipManager = {
+                                    vue: this,
+                                    config: { intro: 0, outro: 0, enabled: false },
+                                    hasSkippedIntro: false,
+                                    hasSkippedOutro: false,
+
+                                    getKey() {
+                                        const vodName = this.vue.currentGroup?.name || 'default';
+                                        const safeName = vodName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+                                        return `skip_config_${safeName}`;
+                                    },
+                                    load() {
+                                        try {
+                                            const saved = localStorage.getItem(this.getKey());
+                                            if (saved) this.config = JSON.parse(saved);
+                                            else this.config = { intro: 0, outro: 0, enabled: false };
+                                        } catch (e) { }
+                                        this.hasSkippedIntro = false;
+                                        this.hasSkippedOutro = false;
+                                        this.updateUI();
+                                    },
+                                    save() {
+                                        localStorage.setItem(this.getKey(), JSON.stringify(this.config));
+                                        this.updateUI();
+                                    },
+                                    formatTime(seconds) {
+                                        if (!seconds) return '点击设定';
+                                        const m = Math.floor(seconds / 60);
+                                        const s = Math.floor(seconds % 60);
+                                        return `${m}:${s.toString().padStart(2, '0')}`;
+                                    },
+                                    setIntro() {
+                                        if (!dp.video) return;
+                                        const time = Math.floor(dp.video.currentTime);
+                                        if (dp.video.duration && time > dp.video.duration * 0.5) {
+                                            dp.notice('片头时间不能超过视频时长的一半', 2000);
+                                            return;
+                                        }
+                                        this.config.intro = time;
+                                        this.config.enabled = true;
+                                        this.save();
+                                        dp.notice(`已设置片头截止点: ${this.formatTime(this.config.intro)}`);
+                                    },
+                                    setOutro() {
+                                        if (!dp.video) return;
+                                        const time = Math.floor(dp.video.currentTime);
+                                        if (dp.video.duration && time < dp.video.duration * 0.5) {
+                                            dp.notice('片尾起点通常在视频后半部分，请拖动进度条后再设置', 3000);
+                                            return;
+                                        }
+                                        if (this.config.intro > 0 && time <= this.config.intro) {
+                                            dp.notice('片尾时间必须晚于片头', 2000);
+                                            return;
+                                        }
+                                        this.config.outro = time;
+                                        this.config.enabled = true;
+                                        this.save();
+                                        dp.notice(`已设置片尾起点: ${this.formatTime(this.config.outro)}`);
+                                    },
+                                    clear() {
+                                        this.config = { intro: 0, outro: 0, enabled: false };
+                                        this.save();
+                                        dp.notice('已清除跳过配置');
+                                    },
+                                    updateUI() {
+                                        const group = document.querySelector('.dplayer-setting-skip-group');
+                                        if (!group) return;
+                                        const toggleBg = group.querySelector('.dplayer-toggle-icon');
+                                        const toggleKnob = group.querySelector('.toggle-knob');
+                                        if (toggleBg && toggleKnob) {
+                                            if (this.config.enabled) {
+                                                toggleBg.style.background = '#e50914';
+                                                toggleKnob.style.transform = 'translateX(18px)';
+                                            } else {
+                                                toggleBg.style.background = 'rgba(255,255,255,0.2)';
+                                                toggleKnob.style.transform = 'translateX(0)';
+                                            }
+                                        }
+                                        const introVal = group.querySelector('.intro-val');
+                                        if (introVal) introVal.textContent = this.formatTime(this.config.intro);
+                                        const outroVal = group.querySelector('.outro-val');
+                                        if (outroVal) outroVal.textContent = this.formatTime(this.config.outro);
+                                    },
+                                    initUI() {
+                                        const panel = document.querySelector('.dplayer-setting-origin-panel');
+                                        if (!panel || panel.querySelector('.dplayer-setting-skip-group')) {
+                                            if (panel) this.updateUI();
+                                            return;
+                                        }
+                                        const html = `
+                                            <div class="dplayer-setting-skip-group" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 5px; padding-top: 5px;">
+                                                <div class="dplayer-setting-item dplayer-setting-skip-toggle" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                                    <span class="dplayer-label" style="white-space: nowrap;">跳过片头片尾</span>
+                                                    <div class="dplayer-toggle-icon" style="position: relative; width: 40px; height: 22px; background: ${this.config.enabled ? '#e50914' : 'rgba(255,255,255,0.2)'}; border-radius: 20px; transition: background 0.3s; flex-shrink: 0;">
+                                                        <div class="toggle-knob" style="position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.4); transform: translateX(${this.config.enabled ? '18px' : '0'});"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="dplayer-setting-item dplayer-setting-set-intro" style="cursor: pointer; justify-content: space-between;">
+                                                    <span class="dplayer-label">设置片头</span>
+                                                    <span class="dplayer-value intro-val" style="opacity: 0.8;">${this.formatTime(this.config.intro)}</span>
+                                                </div>
+                                                <div class="dplayer-setting-item dplayer-setting-set-outro" style="cursor: pointer; justify-content: space-between;">
+                                                    <span class="dplayer-label">设置片尾</span>
+                                                    <span class="dplayer-value outro-val" style="opacity: 0.8;">${this.formatTime(this.config.outro)}</span>
+                                                </div>
+                                                 <div class="dplayer-setting-item dplayer-setting-del-config" style="cursor: pointer; color: #888; font-size: 12px; height: 32px; display: flex; align-items: center; padding: 0 10px; margin-top: 0;">
+                                                    <i class="fas fa-trash-alt" style="margin-right:8px;"></i> 清除跳过配置
+                                                </div>
+                                            </div>
+                                        `;
+                                        panel.insertAdjacentHTML('beforeend', html);
+                                        const group = panel.querySelector('.dplayer-setting-skip-group');
+                                        group.querySelector('.dplayer-setting-skip-toggle').addEventListener('click', () => {
+                                            this.config.enabled = !this.config.enabled;
+                                            this.save();
+                                            dp.notice(this.config.enabled ? '已开启跳过功能' : '已关闭跳过功能');
+                                        });
+                                        group.querySelector('.dplayer-setting-set-intro').addEventListener('click', () => this.setIntro());
+                                        group.querySelector('.dplayer-setting-set-outro').addEventListener('click', () => this.setOutro());
+                                        group.querySelector('.dplayer-setting-del-config').addEventListener('click', () => this.clear());
+                                    },
+                                    check(time) {
+                                        if (!this.config.enabled) return;
+                                        if (this.config.intro > 0 && time < this.config.intro && !this.hasSkippedIntro) {
+                                            dp.seek(this.config.intro);
+                                            dp.notice('已跳过片头');
+                                            this.hasSkippedIntro = true;
+                                        }
+                                        if (this.config.outro > 0 && time > this.config.outro && !this.hasSkippedOutro) {
+                                            dp.notice('已跳过片尾');
+                                            this.hasSkippedOutro = true;
+                                            if (dp.events) dp.events.trigger('ended');
+                                        }
+                                    }
+                                };
+
+                                // 监听播放器事件
+                                dp.on('timeupdate', () => {
+                                    if (dp.video && window.skipManager) window.skipManager.check(dp.video.currentTime);
+                                });
+
+                                dp.on('canplay', () => {
+                                    if (window.skipManager) window.skipManager.load();
+                                });
+
+                                // 初始加载配置
+                                window.skipManager.load();
+
+                                // 注入“下一集”按钮
+                                {
+                                    const iconsRight = dplayerContainer.querySelector('.dplayer-icons-right');
+                                    if (iconsRight && !iconsRight.querySelector('.dplayer-next-icon')) {
+                                        const nextBtnHtml = `
+                                            <div class="dplayer-icon dplayer-next-icon" data-balloon="下一集" data-balloon-pos="up">
+                                                <span class="dplayer-icon-content" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                                    <i class="fas fa-step-forward" aria-hidden="true" style="font-size:18px;"></i>
+                                                </span>
+                                            </div>
+                                        `;
+                                        iconsRight.insertAdjacentHTML('afterbegin', nextBtnHtml);
+
+                                        const nextBtn = iconsRight.querySelector('.dplayer-next-icon');
+                                        if (nextBtn) {
+                                            nextBtn.addEventListener('click', () => {
+                                                this.playNextEpisode();
+                                            });
+                                        }
+                                    }
+                                }
 
                                 // 再次点击设置按钮时关闭设置菜单
                                 const settingIcon = dplayerContainer.querySelector('.dplayer-setting-icon');
@@ -5320,6 +5651,16 @@
                         // 恢复播放进度
                         let progressRestored = false;
                         dp.on('canplay', () => {
+                            // 💾 恢复倍速设置 (每次视频加载都检查)
+                            try {
+                                const savedSpeed = parseFloat(localStorage.getItem('dplayer_speed'));
+                                if (savedSpeed && !isNaN(savedSpeed) && dp.video) {
+                                    if (Math.abs(dp.video.playbackRate - savedSpeed) > 0.01) {
+                                        dp.speed(savedSpeed);
+                                    }
+                                }
+                            } catch (e) { }
+
                             if (progressRestored) return;
 
                             try {
@@ -5467,6 +5808,11 @@
                             if (movieName) {
                                 this.addToWatchHistory(movieName, poster, episodeName, duration, duration, this.currentGroup);
                             }
+
+                            // 自动播放下一集（非单曲循环模式下）
+                            if (!dp.loop) {
+                                this.playNextEpisode(true);
+                            }
                         });
 
                     } else {
@@ -5607,6 +5953,32 @@
                         setTimeout(() => {
                             this.autoRetryMessage = '';
                         }, 3000);
+                    }
+                },
+
+                // 播放下一集
+                playNextEpisode(auto = false) {
+                    if (!this.episodeList || this.episodeList.length === 0) return;
+
+                    const currentIndex = this.episodeList.findIndex(ep => ep.url === this.currentUrl);
+                    if (currentIndex < 0) return;
+
+                    if (currentIndex < this.episodeList.length - 1) {
+                        const nextEp = this.episodeList[currentIndex + 1];
+                        console.log('播放下一集:', nextEp.name);
+
+                        if (auto) {
+                            if (typeof dp !== 'undefined' && dp.notice) dp.notice(`即将播放下一集: ${nextEp.name}`, 3000);
+                        }
+
+                        this.play(nextEp.url);
+
+                        this.$nextTick(() => {
+                            const activeBtn = document.querySelector('.episode-btn.active');
+                            if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        });
+                    } else {
+                        if (typeof dp !== 'undefined' && dp.notice) dp.notice('已经是最后一集了');
                     }
                 }
             }

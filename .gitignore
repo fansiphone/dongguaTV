@@ -11,20 +11,27 @@ cache.db-wal
 cache.db-shm
 *.log
 db.json
-app-debug.apk
 public/cache
 
 # IDE Config
 .idea/
 *.iml
+.vscode/
 
-# Android/Capacitor Build
+# Android/Capacitor Build (标准版)
 android/app/build/
 android/.gradle/
 android/local.properties
 
+# Android TV / GeckoView Build (电视盒子版)
+android-tv/node_modules/
+android-tv/android/app/build/
+android-tv/android/.gradle/
+android-tv/android/build/
+android-tv/android/local.properties
+android-tv/build_*.txt
 
-
-
+# APK 文件
+*.apk
 
 
