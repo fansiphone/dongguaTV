@@ -1,25 +1,24 @@
 package com.ednovas.donguatv.tv;
 
 import android.os.Bundle;
-// 使用 GeckoView 版本的 BridgeActivity
-import com.nicepkg.nicepkg.capacitor_geckoview.GeckoBridgeActivity;
+import com.getcapacitor.BridgeActivity;
 
 /**
- * MainActivity for E视界TV (GeckoView 版本)
+ * MainActivity for E视界TV
  * 
- * 这个版本使用 GeckoView 替代系统 WebView，
- * 解决老旧电视盒子上的 WebView 兼容性问题。
+ * 注意：当前使用系统 WebView。
+ * GeckoView 库已包含在 APK 中，但 @web-media/capacitor-geckoview 插件
+ * 不提供可用的 GeckoBridgeActivity 类。
  * 
- * 继承自 GeckoBridgeActivity 而不是 BridgeActivity，
- * 这样 Capacitor 会使用 GeckoView 来渲染网页。
+ * 如果需要真正使用 GeckoView，需要：
+ * 1. 找到或编写自定义的 GeckoView Bridge 集成
+ * 2. 或使用其他 GeckoView Capacitor 插件
  */
-public class MainActivity extends GeckoBridgeActivity {
+public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // GeckoView 自动处理大部分兼容性问题
-        // 不需要额外的 WebView 配置
     }
 }
+

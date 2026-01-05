@@ -44,10 +44,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-
-    // 🦎 GeckoView - Mozilla's browser engine for better TV box compatibility
-    // 使用通用 artifact，包含所有 CPU 架构
-    implementation "org.mozilla.geckoview:geckoview:106.0.20221019185550"
+    // GeckoView 通过 @web-media/capacitor-geckoview 插件自动引入
 }
 
 // 解决 Kotlin 依赖冲突

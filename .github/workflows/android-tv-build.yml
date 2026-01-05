@@ -34,49 +34,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'android-tv/package-lock.json'
 
-      - name: Setup Java (JDK 21)
+      - name: Setup Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Node dependencies
         working-directory: android-tv
-        run: npm install
+        run: |
+          npm install --legacy-peer-deps
+          # postinstall 脚本会自动将 GeckoView 应用到 @capacitor/android
+          echo "✅ Dependencies installed"
         
       - name: Sync Capacitor Android
         working-directory: android-tv
         run: npx cap sync android
 
-      - name: Patch Capacitor libraries for AGP 8
-        working-directory: android-tv
-        run: |
-          echo "🔧 Patching dependencies for AGP 8 compatibility..."
-          
-          # 1. Patch @capacitor/android (Core)
-          sed -i '/android {/a \    namespace "com.getcapacitor.android"' node_modules/@capacitor/android/capacitor/build.gradle
-
-          # 2. Patch capacitor-cordova-android-plugins (Generated)
-          if [ -f "android/capacitor-cordova-android-plugins/build.gradle" ]; then
-             sed -i '/android {/a \    namespace "capacitor.android.plugins"' android/capacitor-cordova-android-plugins/build.gradle
-          fi
-
-          # 3. Patch @capacitor/status-bar
-          if [ -f "node_modules/@capacitor/status-bar/android/build.gradle" ]; then
-             sed -i '/android {/a \    namespace "com.capacitorjs.plugins.statusbar"' node_modules/@capacitor/status-bar/android/build.gradle
-          fi
-
-          # 4. Patch @web-media/capacitor-geckoview
-          if [ -f "node_modules/@web-media/capacitor-geckoview/android/build.gradle" ]; then
-             # Try to extract package name from manifest
-             pkg=$(grep -o 'package="[^"]*"' node_modules/@web-media/capacitor-geckoview/android/src/main/AndroidManifest.xml | cut -d'"' -f2 || echo "com.web_media.capacitor_geckoview")
-             if [ -z "$pkg" ]; then pkg="com.web_media.capacitor_geckoview"; fi
-             echo "  Patching geckoview with namespace: $pkg"
-             sed -i "/android {/a \    namespace \"$pkg\"" node_modules/@web-media/capacitor-geckoview/android/build.gradle
-          fi
+      # AGP 7 不需要 namespace patching，跳过此步骤
 
       - name: Apply GeckoView patches
         working-directory: android-tv

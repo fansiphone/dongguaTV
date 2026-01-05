@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "E视界 Android TV 版本 (使用 GeckoView 内核)",
     "scripts": {
+        "postinstall": "node ./scripts/apply-geckoview.js",
         "init": "npx cap add android && npx cap sync android",
         "sync": "npx cap sync android",
         "build": "cd android && gradlew assembleDebug",
