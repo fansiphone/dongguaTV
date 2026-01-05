@@ -9,15 +9,15 @@ on:
       server_url:
         description: 'Server URL (e.g. https://your-site.com)'
         required: true
-        default: 'https://ednovas.video'
+        default: 'https://tomtv.848588.xyz'
       app_name:
         description: 'App Name'
         required: true
         default: 'E视界TV'
       version_tag:
-        description: 'Version Tag (e.g. v1.0.0)'
+        description: 'Version Tag (e.g. v1.0.1)'
         required: true
-        default: 'v1.0.0'
+        default: 'v1.0.1'
 
 jobs:
   build-tv:
