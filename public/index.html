@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <!-- 核心：不发送 Referrer -->
     <meta name="referrer" content="no-referrer">
     <title>E视界 - 免费在线观看电影电视剧 | 高清影视聚合播放器</title>
@@ -56,39 +57,6 @@
         })();
     </script>
 
-    <!-- 🔍 调试：显示 User Agent 以检测 WebView 类型 -->
-    <script data-cfasync="false">
-        (function () {
-            // 只在应用内显示（非普通浏览器）
-            var isApp = navigator.userAgent.indexOf('Android') > -1 &&
-                (navigator.userAgent.indexOf('wv') > -1 || window.Capacitor);
-
-            if (isApp) {
-                window.addEventListener('load', function () {
-                    var ua = navigator.userAgent;
-                    var isGecko = ua.indexOf('Gecko/') > -1 && ua.indexOf('Firefox/') > -1;
-                    var engine = isGecko ? '🦎 GeckoView' : '📱 System WebView';
-
-                    console.log('[WebView 检测]', engine);
-                    console.log('[User Agent]', ua);
-
-                    // 显示一个临时通知
-                    var div = document.createElement('div');
-                    div.id = 'webview-debug';
-                    div.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:rgba(0,0,0,0.9);color:#fff;padding:10px;border-radius:8px;font-size:12px;z-index:999999;max-height:100px;overflow:auto;';
-                    div.innerHTML = '<b>' + engine + '</b><br><small>' + ua.substring(0, 100) + '...</small>';
-                    document.body.appendChild(div);
-
-                    // 5秒后自动隐藏
-                    setTimeout(function () {
-                        div.style.transition = 'opacity 0.5s';
-                        div.style.opacity = '0';
-                        setTimeout(function () { div.remove(); }, 500);
-                    }, 5000);
-                });
-            }
-        })();
-    </script>
 
     <!-- SW 版本检测和强制更新（必须在最开头） -->
     <script data-cfasync="false">
@@ -196,6 +164,148 @@
             text-rendering: optimizeSpeed;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 📱 移动端 hover 残留修复 */
+        /* 在触摸设备上禁用 DPlayer 控制按钮的 hover 效果 */
+        @media (hover: none) and (pointer: coarse) {
+
+            .dplayer-icons .dplayer-icon:hover,
+            .dplayer-icon:hover,
+            .dplayer-icon.dplayer-play-icon:hover,
+            .dplayer-icon.dplayer-volume-icon:hover,
+            .dplayer-icon.dplayer-setting-icon:hover,
+            .dplayer-icon.dplayer-full-icon:hover,
+            .dplayer-icon.dplayer-full-in-icon:hover,
+            .dplayer-setting-box .dplayer-setting-item:hover,
+            .dplayer-menu-item:hover,
+            .dplayer-bezel-icon:hover,
+            .dplayer-setting-speed-item:hover {
+                /* 重置 hover 状态的样式 */
+                transform: none !important;
+                background: inherit !important;
+                box-shadow: none !important;
+            }
+
+            .dplayer-icon:hover svg,
+            .dplayer-icons .dplayer-icon:hover svg {
+                transform: none !important;
+                filter: none !important;
+            }
+
+            .dplayer-icon:hover svg path,
+            .dplayer-icons .dplayer-icon:hover svg path {
+                fill: rgba(255, 255, 255, 0.9) !important;
+            }
+        }
+
+        /* 📺 TV 遥控器焦点导航样式 */
+        /* 让所有可交互元素在获得焦点时显示高亮边框 */
+        .close-btn:focus,
+        .btn-cast:focus,
+        .source-pill:focus,
+        .ep-item:focus,
+        .card:focus,
+        .info-modal-close:focus,
+        button:focus,
+        a:focus,
+        [tabindex]:focus {
+            outline: 3px solid #e50914 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.3) !important;
+        }
+
+        /* 播放器控制按钮焦点样式 */
+        .dplayer-icon:focus {
+            outline: 2px solid #fff !important;
+            outline-offset: 2px !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-radius: 4px !important;
+        }
+
+        /* 确保所有可点击元素可以获得焦点 */
+        .source-pill,
+        .ep-item,
+        .close-btn,
+        .btn-cast,
+        .card {
+            cursor: pointer;
+        }
+
+        /* 📺 TV 模式专用样式 - 让控制按钮可以获得焦点 */
+        .dplayer-icon {
+            outline: none;
+        }
+
+        .dplayer-icon:focus {
+            outline: 3px solid #e50914 !important;
+            outline-offset: 2px !important;
+            background: rgba(229, 9, 20, 0.3) !important;
+            border-radius: 4px !important;
+        }
+
+        /* 📺 TV 模式自定义按钮样式 */
+        #tv-switch-source:hover,
+        #tv-select-episode:hover,
+        #tv-switch-source:focus,
+        #tv-select-episode:focus {
+            background: rgba(229, 9, 20, 0.5) !important;
+        }
+
+
+        /* 📱 全屏播放模式：移除状态栏 padding，让视频占满全屏 */
+        body.dplayer-fullscreen-active {
+            padding-top: 0 !important;
+        }
+
+        /* 📱 DPlayer 全屏容器样式优化 */
+        .dplayer-fulled,
+        .dplayer-web-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 2147483647 !important;
+            background: #000 !important;
+        }
+
+        /* 📱 修复全屏模式下进度条不显示的问题 */
+        /* 覆盖可能存在的隐藏规则，确保进度条在全屏时可见 */
+        .dplayer-fulled .dplayer-bar-wrap,
+        .dplayer-full .dplayer-bar-wrap,
+        .dplayer-web-fullscreen .dplayer-bar-wrap {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        .dplayer-fulled .dplayer-bar,
+        .dplayer-full .dplayer-bar,
+        .dplayer-web-fullscreen .dplayer-bar {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        .dplayer-fulled .dplayer-thumb,
+        .dplayer-full .dplayer-thumb,
+        .dplayer-web-fullscreen .dplayer-thumb {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        .dplayer-fulled .dplayer-bar-time,
+        .dplayer-full .dplayer-bar-time,
+        .dplayer-web-fullscreen .dplayer-bar-time {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* 全屏时隐藏导航栏 */
+        body.dplayer-fullscreen-active .navbar-custom {
+            display: none !important;
         }
 
         /* 性能优化：图片默认优化 */
@@ -814,9 +924,7 @@
             pointer-events: auto !important;
         }
 
-        /* 全屏时及自动隐藏时控制栏完全隐藏 */
-        .dplayer-fulled .dplayer-controller,
-        .dplayer-full .dplayer-controller,
+        /* ✅ 修复后：仅在控制器被自动隐藏时才隐藏（移除了 .dplayer-fulled 和 .dplayer-full） */
         .dplayer-hide-controller .dplayer-controller {
             opacity: 0 !important;
             visibility: hidden !important;
@@ -826,36 +934,13 @@
             pointer-events: none !important;
         }
 
-        /* 全屏时及自动隐藏时进度条也完全隐藏 */
-        .dplayer-fulled .dplayer-bar-wrap,
-        .dplayer-full .dplayer-bar-wrap,
-        .dplayer-fulled .dplayer-bar,
-        .dplayer-full .dplayer-bar,
-        .dplayer-fulled .dplayer-thumb,
-        .dplayer-full .dplayer-thumb,
-        .dplayer-fulled .dplayer-bar-time,
-        .dplayer-full .dplayer-bar-time,
+        /* ✅ 修复后：仅在控制器被自动隐藏时才隐藏进度条 */
         .dplayer-hide-controller .dplayer-bar-wrap,
         .dplayer-hide-controller .dplayer-bar-time,
         .dplayer-hide-controller .dplayer-thumb {
             opacity: 0 !important;
             visibility: hidden !important;
             pointer-events: none !important;
-        }
-
-        .dplayer-fulled:hover .dplayer-controller,
-        .dplayer-full:hover .dplayer-controller {
-            opacity: 1 !important;
-            visibility: visible !important;
-            transform: translateY(0) !important;
-            bottom: 0 !important;
-            pointer-events: auto !important;
-        }
-
-        .dplayer-fulled:hover .dplayer-bar-wrap,
-        .dplayer-full:hover .dplayer-bar-wrap {
-            opacity: 1 !important;
-            visibility: visible !important;
         }
 
         /* 单击触发显示控制栏 */
@@ -2503,11 +2588,35 @@
             }
         }
 
-        /* 📱 Android/Capacitor Fullscreen: 只处理状态栏，不干扰 DPlayer 原生全屏 */
-        /* 这个 class 只在需要时由 JS 添加 */
-        body.dplayer-fullscreen-active .navbar-custom {
+        /* 📱 Android/Capacitor Fullscreen: 只处理必要的全屏适配 */
+        /* DPlayer 全屏模式 - 确保覆盖整个屏幕 */
+        .dplayer-fulled {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 2147483647 !important;
+            background: #000 !important;
+        }
+
+        /* 确保 body 和 html 在全屏时不会滚动，并移除安全区域 padding */
+        html:has(.dplayer-fulled),
+        body:has(.dplayer-fulled) {
+            overflow: hidden !important;
+            padding-top: 0 !important;
+        }
+
+        /* 隐藏导航栏 */
+        html:has(.dplayer-fulled) .navbar-custom,
+        body:has(.dplayer-fulled) .navbar-custom,
+        html:has(.dplayer-web-fullscreen) .navbar-custom,
+        body:has(.dplayer-web-fullscreen) .navbar-custom {
             display: none !important;
         }
+
+        /* 📺 网页全屏模式 - 只隐藏导航栏，不覆盖 DPlayer 原生样式 */
+        /* DPlayer 自己会处理网页全屏的布局 */
     </style>
 </head>
 
@@ -2870,7 +2979,8 @@
 
         <!-- ★★★ 播放详情页 (影院布局) ★★★ -->
         <div class="detail-overlay" :class="{ active: showDetail }">
-            <div class="close-btn" @click="closeDetail"><i class="fas fa-times"></i></div>
+            <div class="close-btn" tabindex="1" @click="closeDetail" @keydown.enter="closeDetail"><i
+                    class="fas fa-times"></i></div>
 
             <div class="player-layout" v-if="currentGroup">
 
@@ -2882,7 +2992,7 @@
                             正在播放: <span class="text-white fw-bold">{{ currentSource?.site_name }}</span>
                         </div>
                     </div>
-                    <button class="btn-cast" @click="castVideo">
+                    <button class="btn-cast" tabindex="2" @click="castVideo">
                         <i class="fas fa-tv"></i> 一键投屏
                     </button>
                 </div>
@@ -2945,9 +3055,9 @@
                         <!-- 快速线路列表 (< 600ms) -->
                         <div class="source-list" v-if="fastSources.length > 0 || slowSources.length > 0">
                             <!-- 快速线路 -->
-                            <div v-for="source in fastSources" class="source-pill"
-                                :class="{ active: currentSource?.site_key === source.site_key }"
-                                @click="switchSource(source)">
+                            <div v-for="(source, index) in fastSources" class="source-pill"
+                                :class="{ active: currentSource?.site_key === source.site_key }" :tabindex="10 + index"
+                                @click="switchSource(source)" @keydown.enter="switchSource(source)">
                                 <span>{{ source.site_name }}</span>
                                 <span class="latency-dot" :class="getLatencyClass(source.latency)"></span>
                                 <span style="font-size:10px; opacity:0.6;">{{source.latency}}ms</span>
@@ -2970,9 +3080,10 @@
                                 <i class="fas fa-hourglass-half"></i> 较慢线路 ({{ slowSources.length }})
                             </div>
                             <!-- 慢速线路 -->
-                            <div v-for="source in slowSources" class="source-pill"
+                            <div v-for="(source, index) in slowSources" class="source-pill"
                                 :class="{ active: currentSource?.site_key === source.site_key }" style="opacity: 0.7;"
-                                @click="switchSource(source)">
+                                :tabindex="100 + index" @click="switchSource(source)"
+                                @keydown.enter="switchSource(source)">
                                 <span>{{ source.site_name }}</span>
                                 <span class="latency-dot" :class="getLatencyClass(source.latency)"></span>
                                 <span style="font-size:10px; opacity:0.6;">{{source.latency}}ms</span>
@@ -3248,6 +3359,41 @@
                     isAutoRetrying: false,  // 是否正在自动重试
                     autoRetryMessage: '',  // 自动切换提示信息
                     watchHistory: [],  // 用户观看历史记录
+
+                    // 📺 TV 模式检测 - 通过 User Agent 或屏幕尺寸判断
+                    // 也支持 URL 参数 ?tv=1 或 localStorage 强制启用
+                    isTVMode: (function () {
+                        // 1. 检查 URL 参数 ?tv=1
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (urlParams.get('tv') === '1') {
+                            try { localStorage.setItem('force_tv_mode', '1'); } catch (e) { }
+                            return true;
+                        }
+                        if (urlParams.get('tv') === '0') {
+                            try { localStorage.removeItem('force_tv_mode'); } catch (e) { }
+                            return false;
+                        }
+
+                        // 2. 检查 localStorage 记忆
+                        try {
+                            if (localStorage.getItem('force_tv_mode') === '1') return true;
+                        } catch (e) { }
+
+                        // 3. 自动检测
+                        const ua = navigator.userAgent.toLowerCase();
+                        // 添加 sabrina = Chromecast with Google TV
+                        const tvKeywords = ['android tv', 'googletv', 'aftt', 'aftm', 'aftb', 'firetv', 'chromecast', 'roku', 'smarttv', 'tizen', 'webos', 'leanback', 'sabrina', 'boreal'];
+                        const isTVUA = tvKeywords.some(k => ua.includes(k));
+                        const isBigScreen = window.screen.width >= 1280 && window.screen.height >= 720;
+                        const isNoTouch = !('ontouchstart' in window) || navigator.maxTouchPoints === 0;
+                        const isGecko = ua.includes('gecko/') && ua.includes('firefox/');
+                        // Capacitor 原生 + 大屏幕 + 非触摸 = 可能是 TV
+                        const isCapacitorTV = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && isBigScreen && isNoTouch;
+
+                        const result = isTVUA || isGecko || isCapacitorTV;
+                        console.log('[TV 检测]', { isTVUA, isBigScreen, isNoTouch, isGecko, isCapacitorTV, result, ua: ua.substring(0, 100) });
+                        return result;
+                    })(),
                     historyExpanded: false,  // 观看历史展开状态
                     historyCanScrollLeft: false,  // 可以向左滚动
                     historyCanScrollRight: false,  // 可以向右滚动
@@ -3319,6 +3465,12 @@
                 console.log('[VERSION] DongguaTV Code Version: 2024-12-19-v2 (showMovieInfo exists)');
                 console.log('[VERSION] Methods available:', Object.keys(this.$options.methods || {}).join(', '));
 
+                // 📺 TV 模式设置
+                if (this.isTVMode) {
+                    // 添加 TV 模式 class 以应用专用样式
+                    document.body.classList.add('tv-mode');
+                }
+
                 // 性能优化：使用 passive 滚动监听 + 节流
                 let scrollTicking = false;
                 window.addEventListener('scroll', () => {
@@ -3350,6 +3502,146 @@
                         }
                     }
                 });
+
+                // 📺 TV 遥控器键盘控制 - 使用 window 级别捕获
+                const self = this;
+                window.addEventListener('keydown', function (e) {
+                    // TV 模式全局返回键处理
+                    if (self.isTVMode && (e.key === 'Escape' || e.key === 'Backspace')) {
+                        // 检查是否有弹窗
+                        const popup = document.getElementById('tv-episode-popup');
+                        if (popup) {
+                            e.preventDefault();
+                            popup.remove();
+                            const epBtn = document.getElementById('tv-select-episode');
+                            if (epBtn) epBtn.focus();
+                            return false;
+                        }
+
+                        // 如果在播放页面，关闭播放页面
+                        if (self.showDetail) {
+                            e.preventDefault();
+                            self.closeDetail();
+                            return false;
+                        }
+
+                        // 如果在搜索页面，返回首页
+                        if (self.searched) {
+                            e.preventDefault();
+                            self.goHome();
+                            return false;
+                        }
+
+                        // 在首页：不拦截返回键，让系统处理（退出 APP）
+                        // 不调用 e.preventDefault()，让事件传递给 Android
+                    }
+
+                    // 其他控制只在播放页面 + TV 模式生效
+                    if (!self.showDetail || !self.isTVMode) return;
+
+                    // 获取当前焦点元素
+                    const activeEl = document.activeElement;
+                    const isPlayBtn = activeEl && activeEl.classList.contains('dplayer-play-icon');
+                    const isProgressBar = activeEl && (activeEl.classList.contains('dplayer-bar') || activeEl.closest('.dplayer-bar'));
+
+                    switch (e.key) {
+                        case 'Enter':
+                        case ' ':
+                            // 只在焦点在播放按钮时才暂停/播放
+                            if (isPlayBtn && dp && dp.video) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                dp.toggle();
+                                dp.notice(dp.video.paused ? '⏸ 已暂停' : '▶ 播放中');
+                                return false;
+                            }
+                            // 其他按钮让它们自己处理点击
+                            break;
+                        case 'ArrowDown':
+                            // 从顶部按钮跳到底部控制栏
+                            const isTopBtn = activeEl && (activeEl.id === 'tv-back' || activeEl.id === 'tv-select-episode' || activeEl.id === 'tv-switch-source' || activeEl.id === 'tv-play-pause');
+                            if (isTopBtn) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                const bottomPlayBtn = document.getElementById('tv-bottom-play');
+                                if (bottomPlayBtn) {
+                                    bottomPlayBtn.focus();
+                                    if (dp) dp.notice('▶ 底部控制栏');
+                                }
+                                return false;
+                            }
+                            break;
+                        case 'ArrowUp':
+                            // 从底部控制栏跳到顶部按钮
+                            const isBottomBtn = activeEl && (activeEl.id === 'tv-bottom-play' || activeEl.id === 'tv-rewind' || activeEl.id === 'tv-forward' || activeEl.id === 'tv-speed');
+                            if (isBottomBtn || (activeEl && activeEl.classList.contains('dplayer-icon'))) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                const playPauseBtn = document.getElementById('tv-play-pause');
+                                if (playPauseBtn) {
+                                    playPauseBtn.focus();
+                                    if (dp) dp.notice('⏸ 顶部控制栏');
+                                }
+                                return false;
+                            }
+                            break;
+                        case 'ArrowLeft':
+                            // 只在焦点在进度条时才快退
+                            if (isProgressBar && dp && dp.video) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                dp.video.currentTime = Math.max(0, dp.video.currentTime - 10);
+                                dp.notice('⏪ 快退 10 秒');
+                                return false;
+                            }
+                            // 否则让焦点移动
+                            break;
+                        case 'ArrowRight':
+                            // 只在焦点在进度条时才快进
+                            if (isProgressBar && dp && dp.video) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                dp.video.currentTime = Math.min(dp.video.duration || 0, dp.video.currentTime + 10);
+                                dp.notice('⏩ 快进 10 秒');
+                                return false;
+                            }
+                            // 否则让焦点移动
+                            break;
+                        case 'AudioVolumeUp':
+                            // 遥控器音量+
+                            if (dp && dp.video) {
+                                e.preventDefault();
+                                dp.video.volume = Math.min(1, dp.video.volume + 0.1);
+                                dp.notice('🔊 音量: ' + Math.round(dp.video.volume * 100) + '%');
+                                return false;
+                            }
+                            break;
+                        case 'AudioVolumeDown':
+                            // 遥控器音量-
+                            if (dp && dp.video) {
+                                e.preventDefault();
+                                dp.video.volume = Math.max(0, dp.video.volume - 0.1);
+                                dp.notice('🔉 音量: ' + Math.round(dp.video.volume * 100) + '%');
+                                return false;
+                            }
+                            break;
+                        case 'Escape':
+                        case 'Backspace':
+                            e.preventDefault();
+                            // 先检查是否有选集弹窗，如果有就关闭弹窗
+                            const popup = document.getElementById('tv-episode-popup');
+                            if (popup) {
+                                popup.remove();
+                                // 恢复焦点到选集按钮
+                                const epBtn = document.getElementById('tv-select-episode');
+                                if (epBtn) epBtn.focus();
+                            } else {
+                                // 否则关闭播放页面
+                                self.closeDetail();
+                            }
+                            return false;
+                    }
+                }, true);  // 捕获阶段
 
                 // Store reference to app instance for external access
                 window.vueApp = this;
@@ -4354,6 +4646,12 @@
                 scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); },
 
                 goHome() {
+                    // TV 模式：直接刷新页面，确保完全重置状态
+                    if (this.isTVMode) {
+                        window.location.href = '/';
+                        return;
+                    }
+
                     this.scrollToTop();
                     // 关闭播放详情页
                     this.showDetail = false;
@@ -4362,8 +4660,7 @@
                     this.searched = false;
                     this.keyword = '';
                     this.rawList = [];
-                    // 滚动到页面顶部
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo(0, 0);
                 },
 
                 // 加载单个榜单数据
@@ -4625,6 +4922,17 @@
                     this.searched = true;
                     this.rawList = [];
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // TV 模式：聚焦到返回首页按钮
+                    if (this.isTVMode) {
+                        setTimeout(() => {
+                            const backBtn = document.querySelector('#search-result-anchor button');
+                            if (backBtn) {
+                                backBtn.focus();
+                                backBtn.setAttribute('tabindex', '1');
+                            }
+                        }, 100);
+                    }
 
                     // 构建搜索 URL，包含原始标题用于智能搜索
                     let url = `/api/search?wd=${encodeURIComponent(this.keyword)}&stream=true`;
@@ -4935,7 +5243,28 @@
                     }
                     // 如果全部不可用，不自动选择，UI会显示提示
                 },
-                closeDetail() { this.showDetail = false; if (dp) dp.pause(); },
+                closeDetail() {
+                    this.showDetail = false;
+                    if (dp) dp.pause();
+
+                    // TV 模式：移除控制栏
+                    const tvControls = document.getElementById('tv-controls');
+                    if (tvControls) tvControls.remove();
+                    const tvBottomControls = document.getElementById('tv-bottom-controls');
+                    if (tvBottomControls) tvBottomControls.remove();
+                    const tvEpisodePopup = document.getElementById('tv-episode-popup');
+                    if (tvEpisodePopup) tvEpisodePopup.remove();
+
+                    // 退出全屏模式
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => { });
+                    }
+
+                    // 重置页面滚动位置
+                    window.scrollTo(0, 0);
+                    document.body.style.overflow = '';
+                    document.documentElement.style.overflow = '';
+                },
                 async switchSource(source) {
                     this.currentSource = source;
                     this.loadingDetail = true;
@@ -5110,11 +5439,14 @@
                             // 2. 使用 Capacitor 插件
                             if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
                                 try {
-                                    // 隐藏状态栏
+                                    // 隐藏状态栏并让 WebView 覆盖状态栏区域
                                     const { StatusBar } = window.Capacitor.Plugins;
                                     if (StatusBar) {
+                                        // 先让 WebView 覆盖状态栏区域
+                                        await StatusBar.setOverlaysWebView({ overlay: true });
+                                        // 然后隐藏状态栏
                                         await StatusBar.hide();
-                                        console.log('[Fullscreen] 状态栏已隐藏');
+                                        console.log('[Fullscreen] 状态栏已隐藏，WebView 已扩展');
                                     }
                                 } catch (e) { console.warn('StatusBar error:', e); }
 
@@ -5146,10 +5478,13 @@
                             // 2. 使用 Capacitor 插件
                             if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
                                 try {
-                                    // 显示状态栏
+                                    // 恢复状态栏
                                     const { StatusBar } = window.Capacitor.Plugins;
                                     if (StatusBar) {
+                                        // 先显示状态栏
                                         await StatusBar.show();
+                                        // 恢复 WebView 不覆盖状态栏
+                                        await StatusBar.setOverlaysWebView({ overlay: false });
                                         console.log('[Fullscreen] 状态栏已恢复');
                                     }
                                 } catch (e) { console.warn('StatusBar error:', e); }
@@ -5430,16 +5765,80 @@
                             }
                         }, 500);
 
-                        // 添加全屏横屏功能（手机端）
-                        dp.on('fullscreen', () => {
+                        // 添加全屏横屏功能（手机端）+ 📱 Android 状态栏管理
+                        // 检测 Capacitor 插件
+                        const { StatusBar } = typeof Capacitor !== 'undefined' ? Capacitor.Plugins : {};
+
+                        // 进入全屏处理函数
+                        const enterFullscreenMode = async () => {
+                            // 1. 标记 body 为全屏状态（移除 safe-area padding）
+                            document.body.classList.add('dplayer-fullscreen-active');
+
+                            // 2. 📱 调用 Android 原生全屏接口（移除 padding + 旋转横屏 + 隐藏状态栏）
+                            if (window.AndroidFullscreen) {
+                                window.AndroidFullscreen.enter();
+                                console.log('[Fullscreen] Android 原生全屏已启用');
+                            }
+
+                            // 3. Capacitor StatusBar 插件（作为备用）
+                            if (StatusBar) {
+                                try {
+                                    await StatusBar.setOverlaysWebView({ overlay: true });
+                                    await StatusBar.hide();
+                                    console.log('[Fullscreen] 状态栏已隐藏');
+                                } catch (e) {
+                                    console.warn('[Fullscreen] StatusBar hide error:', e);
+                                }
+                            }
+
+                            // 4. Web API 锁定横屏（作为备用）
                             if (screen.orientation && screen.orientation.lock) {
                                 screen.orientation.lock('landscape').catch(() => { });
                             }
-                        });
+                        };
 
-                        dp.on('fullscreen_cancel', () => {
+                        // 退出全屏处理函数
+                        const exitFullscreenMode = async () => {
+                            // 1. 移除全屏状态标记（恢复 safe-area padding）
+                            document.body.classList.remove('dplayer-fullscreen-active');
+
+                            // 2. 📱 调用 Android 原生退出全屏接口（恢复 padding + 解锁方向 + 显示状态栏）
+                            if (window.AndroidFullscreen) {
+                                window.AndroidFullscreen.exit();
+                                console.log('[Fullscreen] Android 原生全屏已退出');
+                            }
+
+                            // 3. Capacitor StatusBar 插件（作为备用）
+                            if (StatusBar) {
+                                try {
+                                    await StatusBar.show();
+                                    await StatusBar.setOverlaysWebView({ overlay: false });
+                                    console.log('[Fullscreen] 状态栏已恢复');
+                                } catch (e) {
+                                    console.warn('[Fullscreen] StatusBar show error:', e);
+                                }
+                            }
+
+                            // 4. Web API 解锁屏幕方向（作为备用）
                             if (screen.orientation && screen.orientation.unlock) {
                                 screen.orientation.unlock();
+                            }
+                        };
+
+                        // 监听 DPlayer 全屏事件
+                        dp.on('fullscreen', enterFullscreenMode);
+                        dp.on('fullscreen_cancel', exitFullscreenMode);
+
+                        // 监听 DPlayer Web 全屏事件
+                        dp.on('webfullscreen', enterFullscreenMode);
+                        dp.on('webfullscreen_cancel', exitFullscreenMode);
+
+                        // 监听浏览器原生全屏 API（备用）
+                        document.addEventListener('fullscreenchange', () => {
+                            if (document.fullscreenElement) {
+                                enterFullscreenMode();
+                            } else {
+                                exitFullscreenMode();
                             }
                         });
 
@@ -6013,6 +6412,276 @@
                         console.log('[进度记忆-切换] canplay 监听器已添加');
                     }
                     dp.play();
+
+                    // 📺 TV 模式：自动全屏 + 添加控制栏按钮
+                    if (this.isTVMode) {
+                        // 显示 TV 模式提示
+                        const tvNotice = document.createElement('div');
+                        tvNotice.style.cssText = 'position:fixed;top:20px;left:20px;background:#e50914;color:#fff;padding:15px 25px;border-radius:10px;z-index:999999;font-size:16px;font-weight:bold;';
+                        tvNotice.innerHTML = '📺 TV 模式已启用<br>🎮 确认键=暂停 左右键=快进退';
+                        document.body.appendChild(tvNotice);
+                        setTimeout(() => tvNotice.remove(), 6000);
+
+                        // 先全屏
+                        setTimeout(() => {
+                            if (dp.fullScreen) {
+                                dp.fullScreen.request('web');
+                            }
+                        }, 500);
+
+                        // 全屏后添加按钮（需要等待全屏完成）
+                        setTimeout(() => {
+                            try {
+                                // 1. 禁用背景元素的焦点
+                                document.querySelectorAll('.source-pill, .ep-item, .close-btn, .btn-cast, .video-header button').forEach(el => {
+                                    el.setAttribute('tabindex', '-1');
+                                });
+
+                                // 2. 创建顶部控制栏（避免被底部时间显示遮盖）
+                                let controlBar = document.getElementById('tv-controls');
+                                if (!controlBar) {
+                                    controlBar = document.createElement('div');
+                                    controlBar.id = 'tv-controls';
+                                    controlBar.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;gap:15px;';
+                                    document.body.appendChild(controlBar);
+                                }
+
+                                if (!document.getElementById('tv-switch-source')) {
+                                    // 添加"切换线路"按钮
+                                    const switchBtn = document.createElement('button');
+                                    switchBtn.id = 'tv-switch-source';
+                                    switchBtn.setAttribute('tabindex', '102');
+                                    switchBtn.innerHTML = '🔄 切换线路';
+                                    switchBtn.style.cssText = 'background:#e50914;border-radius:8px;padding:10px 20px;color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:bold;';
+                                    switchBtn.onclick = () => {
+                                        const sources = window.vueApp.availableSources;
+                                        const current = window.vueApp.currentSource;
+                                        const idx = sources.findIndex(s => s.site_key === current?.site_key);
+                                        const next = sources[(idx + 1) % sources.length];
+                                        if (next) {
+                                            window.vueApp.switchSource(next);
+                                            dp.notice('切换到: ' + next.site_name);
+                                        }
+                                    };
+
+                                    // 添加"选集"按钮
+                                    const epBtn = document.createElement('button');
+                                    epBtn.id = 'tv-select-episode';
+                                    epBtn.setAttribute('tabindex', '101');
+                                    epBtn.innerHTML = '📺 选集';
+                                    epBtn.style.cssText = 'background:#333;border-radius:8px;padding:10px 20px;color:#fff;border:2px solid #666;cursor:pointer;font-size:14px;font-weight:bold;';
+                                    epBtn.onclick = () => {
+                                        // 创建选集弹窗
+                                        let popup = document.getElementById('tv-episode-popup');
+                                        if (popup) {
+                                            popup.remove();
+                                            return;
+                                        }
+
+                                        popup = document.createElement('div');
+                                        popup.id = 'tv-episode-popup';
+                                        popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border-radius:15px;padding:20px;z-index:9999999;max-width:80%;max-height:70%;overflow-y:auto;border:2px solid #e50914;';
+
+                                        // 标题
+                                        const title = document.createElement('div');
+                                        title.style.cssText = 'color:#fff;font-size:18px;font-weight:bold;margin-bottom:15px;text-align:center;';
+                                        title.textContent = '📺 选择集数';
+                                        popup.appendChild(title);
+
+                                        // 集数列表
+                                        const episodes = window.vueApp.episodeList || [];
+                                        const currentUrl = window.vueApp.currentUrl;
+                                        const grid = document.createElement('div');
+                                        grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;min-width:300px;';
+
+                                        if (episodes.length === 0) {
+                                            const noEp = document.createElement('div');
+                                            noEp.style.cssText = 'color:#999;text-align:center;padding:20px;';
+                                            noEp.textContent = '暂无集数信息';
+                                            grid.appendChild(noEp);
+                                        } else {
+                                            episodes.forEach((ep, i) => {
+                                                const btn = document.createElement('button');
+                                                btn.setAttribute('tabindex', String(300 + i));
+                                                btn.textContent = ep.name || ('第' + (i + 1) + '集');
+                                                const isActive = ep.url === currentUrl;
+                                                btn.style.cssText = 'padding:12px;border-radius:5px;border:none;cursor:pointer;font-size:14px;' +
+                                                    (isActive ? 'background:#e50914;color:#fff;' : 'background:#333;color:#fff;');
+                                                btn.onclick = () => {
+                                                    window.vueApp.play(ep.url);
+                                                    popup.remove();
+                                                };
+                                                grid.appendChild(btn);
+                                            });
+                                        }
+                                        popup.appendChild(grid);
+
+                                        // 关闭按钮
+                                        const closeBtn = document.createElement('button');
+                                        closeBtn.setAttribute('tabindex', '299');
+                                        closeBtn.textContent = '✕ 关闭';
+                                        closeBtn.style.cssText = 'margin-top:15px;width:100%;padding:10px;background:#666;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:14px;';
+                                        closeBtn.onclick = () => popup.remove();
+                                        popup.appendChild(closeBtn);
+
+                                        document.body.appendChild(popup);
+
+                                        // 聚焦到第一个集数按钮
+                                        const firstBtn = grid.querySelector('button');
+                                        if (firstBtn) firstBtn.focus();
+                                    };
+
+                                    // 添加暂停/播放按钮
+                                    const playPauseBtn = document.createElement('button');
+                                    playPauseBtn.id = 'tv-play-pause';
+                                    playPauseBtn.setAttribute('tabindex', '100');
+                                    playPauseBtn.innerHTML = '⏸ 暂停';
+                                    playPauseBtn.style.cssText = 'background:#333;border-radius:8px;padding:10px 20px;color:#fff;border:2px solid #666;cursor:pointer;font-size:14px;font-weight:bold;';
+                                    playPauseBtn.onclick = () => {
+                                        if (dp && dp.video) {
+                                            dp.toggle();
+                                            playPauseBtn.innerHTML = dp.video.paused ? '▶ 播放' : '⏸ 暂停';
+                                            dp.notice(dp.video.paused ? '⏸ 已暂停' : '▶ 播放中');
+                                        }
+                                    };
+
+                                    // 添加返回按钮
+                                    const backBtn = document.createElement('button');
+                                    backBtn.id = 'tv-back';
+                                    backBtn.setAttribute('tabindex', '99');
+                                    backBtn.innerHTML = '← 返回';
+                                    backBtn.style.cssText = 'background:#666;border-radius:8px;padding:10px 20px;color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:bold;';
+                                    backBtn.onclick = () => {
+                                        window.vueApp.closeDetail();
+                                    };
+
+                                    // 按顺序添加按钮：返回、播放/暂停、选集、切换线路
+                                    controlBar.appendChild(backBtn);
+                                    controlBar.appendChild(playPauseBtn);
+                                    controlBar.appendChild(epBtn);
+                                    controlBar.appendChild(switchBtn);
+
+                                    // 创建底部固定控制栏
+                                    let bottomBar = document.getElementById('tv-bottom-controls');
+                                    if (!bottomBar) {
+                                        bottomBar = document.createElement('div');
+                                        bottomBar.id = 'tv-bottom-controls';
+                                        bottomBar.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;gap:20px;align-items:center;background:rgba(0,0,0,0.8);padding:15px 30px;border-radius:15px;';
+
+                                        // 快退按钮
+                                        const rewindBtn = document.createElement('button');
+                                        rewindBtn.id = 'tv-rewind';
+                                        rewindBtn.setAttribute('tabindex', '201');
+                                        rewindBtn.innerHTML = '⏪ -10s';
+                                        rewindBtn.style.cssText = 'background:#444;border-radius:8px;padding:12px 20px;color:#fff;border:none;cursor:pointer;font-size:16px;';
+                                        rewindBtn.onclick = () => {
+                                            if (dp && dp.video) {
+                                                dp.video.currentTime = Math.max(0, dp.video.currentTime - 10);
+                                                dp.notice('⏪ 快退 10 秒');
+                                            }
+                                        };
+
+                                        // 底部播放/暂停按钮
+                                        const bottomPlayBtn = document.createElement('button');
+                                        bottomPlayBtn.id = 'tv-bottom-play';
+                                        bottomPlayBtn.setAttribute('tabindex', '200');
+                                        bottomPlayBtn.innerHTML = '⏸';
+                                        bottomPlayBtn.style.cssText = 'background:#e50914;border-radius:50%;width:60px;height:60px;color:#fff;border:none;cursor:pointer;font-size:24px;';
+                                        bottomPlayBtn.onclick = () => {
+                                            if (dp && dp.video) {
+                                                dp.toggle();
+                                                bottomPlayBtn.innerHTML = dp.video.paused ? '▶' : '⏸';
+                                                playPauseBtn.innerHTML = dp.video.paused ? '▶ 播放' : '⏸ 暂停';
+                                                dp.notice(dp.video.paused ? '⏸ 已暂停' : '▶ 播放中');
+                                            }
+                                        };
+
+                                        // 快进按钮
+                                        const forwardBtn = document.createElement('button');
+                                        forwardBtn.id = 'tv-forward';
+                                        forwardBtn.setAttribute('tabindex', '202');
+                                        forwardBtn.innerHTML = '+10s ⏩';
+                                        forwardBtn.style.cssText = 'background:#444;border-radius:8px;padding:12px 20px;color:#fff;border:none;cursor:pointer;font-size:16px;';
+                                        forwardBtn.onclick = () => {
+                                            if (dp && dp.video) {
+                                                dp.video.currentTime = Math.min(dp.video.duration || 0, dp.video.currentTime + 10);
+                                                dp.notice('⏩ 快进 10 秒');
+                                            }
+                                        };
+
+                                        // 倍速按钮
+                                        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                                        let currentSpeedIndex = 2;  // 默认 1x
+                                        const speedBtn = document.createElement('button');
+                                        speedBtn.id = 'tv-speed';
+                                        speedBtn.setAttribute('tabindex', '203');
+                                        speedBtn.innerHTML = '1x ⚡';
+                                        speedBtn.style.cssText = 'background:#444;border-radius:8px;padding:12px 20px;color:#fff;border:none;cursor:pointer;font-size:16px;';
+                                        speedBtn.onclick = () => {
+                                            if (dp && dp.video) {
+                                                currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+                                                const newSpeed = speeds[currentSpeedIndex];
+                                                dp.video.playbackRate = newSpeed;
+                                                speedBtn.innerHTML = newSpeed + 'x ⚡';
+                                                dp.notice('⚡ 倍速: ' + newSpeed + 'x');
+                                            }
+                                        };
+
+                                        bottomBar.appendChild(rewindBtn);
+                                        bottomBar.appendChild(bottomPlayBtn);
+                                        bottomBar.appendChild(forwardBtn);
+                                        bottomBar.appendChild(speedBtn);
+                                        document.body.appendChild(bottomBar);
+                                    }
+
+                                    // 添加自定义焦点导航：下键从顶部按钮跳到播放按钮
+                                    epBtn.addEventListener('keydown', (e) => {
+                                        if (e.key === 'ArrowDown') {
+                                            e.preventDefault();
+                                            const playBtn = document.querySelector('.dplayer-play-icon');
+                                            if (playBtn) playBtn.focus();
+                                        }
+                                    });
+                                    switchBtn.addEventListener('keydown', (e) => {
+                                        if (e.key === 'ArrowDown') {
+                                            e.preventDefault();
+                                            const playBtn = document.querySelector('.dplayer-play-icon');
+                                            if (playBtn) playBtn.focus();
+                                        }
+                                    });
+
+                                    console.log('[TV 模式] 按钮已添加');
+                                }
+
+                                // 3. 让 DPlayer 控制按钮可获得焦点
+                                document.querySelectorAll('.dplayer-icon').forEach((icon, index) => {
+                                    icon.setAttribute('tabindex', String(200 + index));
+                                    // 添加自定义焦点导航：上键从控制栏跳到顶部按钮
+                                    icon.addEventListener('keydown', (e) => {
+                                        if (e.key === 'ArrowUp') {
+                                            e.preventDefault();
+                                            const epBtn = document.getElementById('tv-select-episode');
+                                            if (epBtn) epBtn.focus();
+                                        }
+                                    });
+                                });
+
+                                // 特别确保播放按钮可获得焦点
+                                const playBtn = document.querySelector('.dplayer-play-icon');
+                                if (playBtn) {
+                                    playBtn.setAttribute('tabindex', '200');
+                                }
+
+                                // 4. 聚焦到暂停/播放按钮
+                                const playPauseBtn = document.getElementById('tv-play-pause');
+                                if (playPauseBtn) {
+                                    playPauseBtn.focus();
+                                }
+                            } catch (e) {
+                                console.log('[TV 模式] 设置失败:', e);
+                            }
+                        }, 1500);  // 延长到 1.5 秒确保全屏完成
+                    }
                 },
 
                 // 处理播放错误，自动切换线路

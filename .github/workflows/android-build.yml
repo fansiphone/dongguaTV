@@ -43,7 +43,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm install
 
       # 保险措施：创建 www 目录并复制 public 内容 (防止 CLI 回退默认 www 时报错)
       - name: Prepare Web Assets

@@ -3,6 +3,7 @@
     "appName": "E视界TV",
     "webDir": "../public",
     "bundledWebRuntime": false,
+    "$comment_server": "📺 修改 server.url 即可更改内置网站地址",
     "server": {
         "url": "https://ednovas.video",
         "cleartext": true
@@ -11,7 +12,7 @@
         "StatusBar": {
             "overlaysWebView": false,
             "style": "DARK",
-            "backgroundColor": "#000000"
+            "backgroundColor": "#141414"
         }
     },
     "android": {

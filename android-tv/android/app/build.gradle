@@ -47,12 +47,12 @@ dependencies {
     // GeckoView 通过 @web-media/capacitor-geckoview 插件自动引入
 }
 
-// 解决 Kotlin 依赖冲突
+// 解决 Kotlin 依赖冲突 (AGP 7.4.2 需要 Kotlin 1.7.x)
 configurations.all {
     resolutionStrategy {
-        force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.0'
-        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0'
-        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0'
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.21'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21'
     }
 }
 

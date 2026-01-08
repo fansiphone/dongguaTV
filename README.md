@@ -26,7 +26,6 @@ https://ednovas-test.vercel.app （不包含任何数据）
 - [📦 安装与运行 (Installation)](#-安装与运行-installation)
 - [🚀 部署 (Deployment)](#-部署-deployment)
 - [🤖 Android APP 构建](#-android-app-构建-github-actions)
-- [📺 电视盒子专用版 (GeckoView)](#-电视盒子专用版-geckoview)
 - [💾 数据维护与备份](#-数据维护与备份)
 - [⚠️ 免责声明 (Disclaimer)](#️-免责声明-disclaimer)
 
@@ -738,7 +737,16 @@ docker run -d -p 3000:3000 \
 
 如果您 Fork 了本项目并希望永久修改默认配置：
 
-1.  编辑 `capacitor.config.json`，修改 `server.url` 为您的服务器地址：
+##### 📱 配置文件位置
+
+| 版本 | 配置文件路径 | App ID |
+|-----|-------------|--------|
+| **手机版** | `capacitor.config.json` | `com.ednovas.donguatv` |
+| **电视版** | `android-tv/capacitor.config.json` | `com.ednovas.donguatv.tv` |
+
+两个版本的配置格式相同，只需修改 `server.url` 即可更改内置网站地址：
+
+1.  编辑对应的 `capacitor.config.json`，修改 `server.url` 为您的服务器地址：
     ```json
     {
       "appId": "com.ednovas.donguatv",
@@ -767,148 +775,6 @@ docker run -d -p 3000:3000 \
     ```
     APK 位于 `android/app/build/outputs/apk/release/`
 
-#### 🏠 内网 HTTP 使用说明
-
-> **⚠️ 重要**：从 Android 9 (API 28) 开始，Android 默认禁止明文 HTTP 流量 (Cleartext Traffic)。如果您的 APK 无法连接 HTTP 服务器，请确认以下配置。
-
-**问题现象**：
-- APK 在 Android TV / 手机上一直显示 loading
-- 浏览器可以正常访问 `http://192.168.x.x:3000`，但 APP 不行
-- 控制台报错 `net::ERR_CLEARTEXT_NOT_PERMITTED`
-
-**解决方案**：
-
-本项目已内置 HTTP 支持配置。如果您使用 GitHub Actions 自动构建或本地构建，APK 会自动支持 HTTP 访问。
-
-**使用 GitHub Actions 构建内网 APK**：
-
-1. 进入 **Actions** → **Android Build & Release** → **Run workflow**
-2. 填写您的内网服务器地址：`http://192.168.1.100:3000`
-3. 构建完成后下载 APK，即可正常访问 HTTP 服务
-
-**📝 注意事项**：
-- `capacitor.config.json` 中的 `"cleartext": true` 是 Capacitor 配置，但 Android 9+ 还需要上述 Android 原生配置
-- 如果您手动构建 APK，请确保项目代码是最新版本（包含上述配置）
-- 建议使用固定 IP 地址而非主机名，避免 DNS 解析问题
-
----
-
-## 📺 电视盒子专用版 (GeckoView)
-
-> **解决老旧电视盒子的 WebView 兼容性问题**
-
-许多电视盒子（如小米电视、极米投影仪等）使用老旧的 Android System WebView，不支持 Vue 3 所需的 `Proxy` 等现代 JavaScript 特性，导致应用无法运行。
-
-### 🔥 GeckoView 版本特点
-
-| 特性 | 标准版 | GeckoView 版 |
-|------|--------|--------------|
-| **WebView 引擎** | 系统 WebView | Mozilla GeckoView |
-| **兼容性** | 需要较新 WebView | 兼容几乎所有 Android 5.0+ 设备 |
-| **APK 大小** | ~10 MB | ~100 MB |
-| **App ID** | `com.ednovas.donguatv` | `com.ednovas.donguatv.tv` |
-| **调试工具** | Chrome DevTools | Firefox 远程调试 |
-
-### 🧪 测试方法
-
-**可以用安卓手机测试！** GeckoView 版本可以在任何 Android 5.0+ 设备上运行：
-
-1. **获取 APK**：
-   - 从 [Releases](https://github.com/ednovas/dongguaTV/releases) 下载电视盒子版 APK
-   - 或按下方说明自行构建
-
-2. **安装到设备**：
-   ```bash
-   # 通过 ADB 安装到连接的设备
-   adb install app-debug.apk
-   
-   # 或直接传输到设备安装
-   ```
-
-3. **验证效果**：
-   - 启动 App，确认不再卡在加载界面
-   - 测试搜索、播放等核心功能
-
-### 🔧 本地构建
-
-电视盒子版本位于 `android-tv/` 目录：
-
-```bash
-# 1. 进入电视盒子项目目录
-cd android-tv
-
-# 2. 安装依赖
-npm install --ignore-scripts
-
-# 3. 设置 Java 环境 (Windows PowerShell)
-$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
-
-# 4. 构建 APK
-cd android
-.\gradlew.bat assembleDebug
-
-# APK 输出位置: android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-**Linux/macOS 构建**：
-```bash
-cd android-tv
-npm install --ignore-scripts
-cd android
-./gradlew assembleDebug
-```
-
-### 📁 项目结构
-
-```
-android-tv/
-├── package.json              # Capacitor 4.6.3 + GeckoView 依赖
-├── capacitor.config.json     # App 配置
-├── README.md                 # 详细说明
-└── android/                  # Android 项目
-    └── app/build/outputs/apk/debug/
-        └── app-debug.apk     # 构建产物
-```
-
-### ⚠️ 注意事项
-
-1. **APK 体积**：由于包含 4 种架构的 GeckoView 引擎，APK 约 300-400MB
-2. **首次启动**：可能稍慢（需要初始化 GeckoView）
-3. **可同时安装**：两个版本 App ID 不同，可以同时安装在设备上
-4. **调试方式**：使用 Firefox 的 `about:debugging` 进行远程调试
-
-### 🖥️ 支持的 CPU 架构
-
-| 架构 | 说明 | 适用设备 |
-|------|------|----------|
-| `arm64-v8a` | ARM 64位 | 大多数现代电视盒子、手机 |
-| `armeabi-v7a` | ARM 32位 | 老旧电视盒子、低端手机 |
-| `x86_64` | Intel/AMD 64位 | 部分平板、模拟器 |
-| `x86` | Intel/AMD 32位 | 老旧平板、模拟器 |
-
-### 🤖 自动构建
-
-电视盒子版会与标准版一起自动构建：
-
-- **触发条件**：推送 `v*.*.*` 格式的 Tag
-- **也支持手动触发**：在 GitHub Actions 页面选择 `Android TV Build (GeckoView)` workflow
-
-构建完成后，Release 页面会包含：
-
-**标准版** (手机/平板推荐):
-- `E视界-vX.X.X-universal.apk` (~10MB)
-
-**电视盒子版** (GeckoView):
-- `E视界TV-vX.X.X-geckoview-universal.apk` (全架构, ~350MB)
-- `E视界TV-vX.X.X-geckoview-arm64-v8a.apk` (推荐, ~100MB)
-- `E视界TV-vX.X.X-geckoview-armeabi-v7a.apk` (老旧设备, ~80MB)
-- `E视界TV-vX.X.X-geckoview-x86_64.apk` (模拟器)
-- `E视界TV-vX.X.X-geckoview-x86.apk` (老旧模拟器)
-
-### 🔗 相关文档
-
-- [电视盒子兼容性指南](docs/TV_BOX_COMPATIBILITY.md)
-- [android-tv/README.md](android-tv/README.md)
 
 ---
 
