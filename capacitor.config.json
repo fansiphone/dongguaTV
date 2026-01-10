@@ -1,9 +1,9 @@
 ﻿{
     "appId": "com.ednovas.donguatv",
-    "appName": "TOM影院",
+    "appName": "E视界",
     "webDir": "public",
     "server": {
-        "url": "http://nas.848588.xyz:3600",
+        "url": "https://tomtv.848588.xyz",
         "cleartext": true
     },
     "plugins": {
@@ -14,6 +14,4 @@
         },
         "ScreenOrientation": {}
     }
-
 }
-
