@@ -595,7 +595,7 @@ app.use(compression({
 }));
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '5mb' }));  // 增大限制以支持历史记录同步
 
 // ========== API 速率限制 ==========
 const rateLimit = require('express-rate-limit');
@@ -775,8 +775,19 @@ app.post('/api/history/push', (req, res) => {
             VALUES (?, ?, ?, ?)
         `);
 
+        // 获取当前服务器上该用户的所有记录 ID
+        const existingIds = cacheManager.db.prepare(
+            'SELECT item_id FROM user_history WHERE user_token = ?'
+        ).all(token).map(row => row.item_id);
+
+        // 计算需要删除的 ID（服务器有但本地没有的）
+        const pushingIds = new Set(history.map(item => item.id));
+        const idsToDelete = existingIds.filter(id => !pushingIds.has(id));
+
         let saved = 0;
+        let deleted = 0;
         const transaction = cacheManager.db.transaction((items) => {
+            // 1. 插入/更新本地有的记录
             for (const item of items) {
                 if (item.id && item.data) {
                     insertStmt.run(
@@ -788,11 +799,23 @@ app.post('/api/history/push', (req, res) => {
                     saved++;
                 }
             }
+
+            // 2. 删除本地已删除的记录
+            if (idsToDelete.length > 0) {
+                const deleteStmt = cacheManager.db.prepare(
+                    'DELETE FROM user_history WHERE user_token = ? AND item_id = ?'
+                );
+                for (const id of idsToDelete) {
+                    deleteStmt.run(token, id);
+                    deleted++;
+                }
+                console.log(`[History Sync] 删除了 ${deleted} 条已移除的记录:`, idsToDelete);
+            }
         });
 
         transaction(history);
 
-        res.json({ sync_enabled: true, saved: saved });
+        res.json({ sync_enabled: true, saved: saved, deleted: deleted });
     } catch (e) {
         console.error('[History Push Error]', e.message);
         res.status(500).json({ error: 'Database error' });
